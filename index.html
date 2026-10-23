@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BHS 模塊化管理系統 v6 — 雲端同步・進銷存・雙語版（BioHealth Solutions）</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;margin:0;background:#eef1f6;color:#1c2733;line-height:1.55}
+.top{background:#1f3864;color:#fff;padding:16px 20px}
+.top h1{font-size:21px;margin:0}
+.top .sub{font-size:12.5px;opacity:.85}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 14px 50px}
+.card{background:#fff;border:1px solid #dde4ee;border-radius:10px;padding:14px 16px;margin:12px 0}
+.card h2{font-size:16.5px;color:#1f3864;margin:0 0 10px}
+.card h3{font-size:14.5px;color:#2e75b6;margin:12px 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.kpi{background:#f4f7fc;border:1px solid #dde4ee;border-radius:9px;padding:10px 12px}
+.kpi b{font-size:19px;color:#1f3864;display:block}
+.kpi span{font-size:12px;color:#5a6a7d}
+label.pl{display:block;font-size:12.5px;color:#40536b;margin:8px 0 3px}
+input[type=number],input[type=text],select{width:100%;padding:6px 8px;border:1px solid #b9c6d8;border-radius:6px;font-size:14px;background:#fffbe8}
+input.ro{background:#f2f2f2}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.seg button{border:1px solid #2e75b6;background:#fff;color:#2e75b6;border-radius:16px;padding:4px 12px;font-size:13px;cursor:pointer}
+.seg button.on{background:#2e75b6;color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid #8aa3c2;background:#fff;border-radius:16px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chips button.on{background:#1f3864;color:#fff;border-color:#1f3864}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:#2e75b6;color:#fff;padding:6px 7px;text-align:left;white-space:nowrap}
+td{border-bottom:1px solid #e4e9f1;padding:5px 7px;vertical-align:middle}
+td.num,th.num{text-align:right}
+.tblwrap{overflow-x:auto}
+.pill{display:inline-block;border-radius:10px;padding:1px 9px;font-size:12px;color:#fff;white-space:nowrap}
+.red{background:#c0392b}.yellow{background:#d9a400}.green{background:#3d9970}.grey{background:#8a97a5}
+.stockin{width:92px;padding:3px 6px;font-size:13px}
+.btn{border:1px solid #2e75b6;background:#2e75b6;color:#fff;border-radius:7px;padding:6px 14px;font-size:13.5px;cursor:pointer}
+.btn.alt{background:#fff;color:#2e75b6}
+.small{font-size:12.5px;color:#5a6a7d}
+.note{background:#fff8e6;border:1px solid #ecd28a;border-radius:8px;padding:9px 12px;font-size:13px;margin:8px 0}
+svg{max-width:100%;height:auto}
+.legend{font-size:12px;color:#5a6a7d;margin-top:4px}
+.navbar{position:sticky;top:0;z-index:60;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.95);border:1px solid #dde4ee;border-radius:10px;padding:7px 9px;margin:10px 0 2px;overflow-x:auto;white-space:nowrap}
+.navbar button{border:1px solid #8aa3c2;background:#fff;border-radius:16px;padding:5px 12px;font-size:13px;cursor:pointer;flex:0 0 auto}
+.navbar button:active{background:#e8effa}
+.navsp{flex:1 0 12px}
+.card{scroll-margin-top:64px}
+.sect-head{display:flex;align-items:center;gap:8px}
+.sect-head h2{margin:0}
+.tgl{margin-left:auto;border:1px solid #8aa3c2;background:#f4f7fc;border-radius:8px;width:36px;height:28px;font-size:15px;cursor:pointer;color:#1f3864;flex:0 0 auto}
+.card-body{margin-top:10px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 12px}
+.fgrid label{font-size:12.5px;color:#40536b;display:block;margin-bottom:2px}
+.fgrid select,.fgrid input{width:100%;padding:6px 8px;border:1px solid #b9c6d8;border-radius:6px;font-size:14px;background:#fff}
+.voided{opacity:.45;text-decoration:line-through}
+.openin{width:84px;padding:3px 6px;font-size:13px}
+.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.gauge{background:#f4f7fc;border:1px solid #dde4ee;border-radius:9px;padding:10px;text-align:center}
+.gauge .gt{font-size:13px;color:#40536b}
+.gauge .gv{font-size:20px;font-weight:700;color:#1f3864}
+.gauge .gs{font-size:11.5px;color:#5a6a7d}
+.alerts{max-height:260px;overflow:auto}
+.alerts div{padding:5px 2px;border-bottom:1px dashed #e4e9f1;font-size:13px}
+img,svg{max-width:100%}
+@media(max-width:768px){
+ .wrap{padding:10px 8px 40px}
+ .top{padding:12px 14px}.top h1{font-size:17.5px}.top .sub{font-size:11.5px}
+ .card{padding:11px 11px;margin:9px 0}.card h2{font-size:15px}
+ .kpis{grid-template-columns:repeat(2,1fr)}
+ .dash{grid-template-columns:repeat(2,1fr)}
+ table{font-size:12.5px} td,th{padding:4px 5px}
+ .stockin{width:74px}
+ .seg button,.chips button{padding:6px 12px;font-size:13.5px}
+ input[type=number],input[type=text],select{font-size:16px;padding:8px}
+ .btn{padding:8px 14px}
+}
+@media(max-width:480px){
+ .kpis{grid-template-columns:repeat(2,1fr)}
+ .dash{grid-template-columns:1fr 1fr}
+ .kpi b{font-size:16px}
+ .gauge .gv{font-size:17px}
+}
+</style></head><body>
+<div class="top"><h1>BHS 模塊化管理系統 v6 — 雲端同步・進銷存・雙語・儀表板版</h1>
+<div class="seg" id="langSeg" style="margin-top:8px"><button data-lang="zh" class="on">中文</button><button data-lang="en">English</button></div>
+<div class="sub">BioHealth Solutions（AminAvast / RenAvast）｜改任一參數或庫存 → 管理總表、圖表、生產計畫全部連動重算｜數據基準：歷史分析 v1.2 + MMR 配方（Cat BHS-01US / Dog BHS-02US）｜庫存初始值為 2024-01-10 盤點快照，已載入進銷存模塊期初；之後用異動登記維護，總表/儀表板即時連動</div></div>
+<div class="wrap">
+<div class="navbar" id="topnav">
+<button data-go="dash">🎛️ 儀表板</button><button data-go="master">📋 總表</button><button data-go="inv">📦 進銷存</button><button data-go="plan">🏭 生產計畫</button><button data-go="chart1">📊 圖表</button><button data-go="cust">👥 客戶</button><button data-go="params">⚙️ 參數</button>
+<span class="navsp"></span>
+<button id="navAll">全部展開</button><button id="navNone">全部摺疊</button><button id="navDef">建議預設</button>
+<span id="syncChip" class="small" style="flex:0 0 auto"></span>
+</div>
+
+<div class="card" id="authCard">
+ <div id="authOut">
+  <h2>🔐 登入（雲端同步）</h2>
+  <div class="fgrid">
+   <label>Email<input id="liEmail" type="email" autocomplete="username"></label>
+   <label>密碼 Password<input id="liPw" type="password" autocomplete="current-password"></label>
+  </div>
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+   <button class="primary" id="liBtn">登入</button>
+   <button id="liForgot">忘記密碼 / 首次設定密碼</button>
+  </div>
+  <div class="small" id="liMsg" style="margin-top:6px">未登入時顯示本機快取／快照（唯讀參考）；登入後自動載入雲端帳本並即時同步。</div>
+ </div>
+ <div id="pwSet" style="display:none">
+  <h2>🔑 設定新密碼</h2>
+  <div class="fgrid"><label>新密碼 New password<input id="pwNew" type="password" autocomplete="new-password"></label></div>
+  <div style="margin-top:8px"><button class="primary" id="pwBtn">儲存新密碼</button></div>
+  <div class="small" style="margin-top:6px">你正透過邀請／重設連結進入，請先設定密碼，之後用 Email＋密碼登入。</div>
+ </div>
+ <div id="authIn" style="display:none">
+  <h2>☁️ 雲端帳本</h2>
+  <div class="small" id="authInfo"></div>
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+   <button id="loBtn">登出</button>
+   <button id="syncBtn">立即同步</button>
+  </div>
+  <div id="queueBox" style="margin-top:8px"></div>
+ </div>
+</div>
+
+<div class="card" data-sec="params"><h2>⚙️ 參數面板（模塊參數化）</h2>
+<div class="grid">
+<div>
+<h3>需求情境（點選即套用）</h3>
+<div class="seg" id="scenarioSeg">
+<button data-sc="2025" class="on">2025 實際</button>
+<button data-sc="proj">Proj 預測基線</button>
+<button data-sc="y2026">2026 年化</button>
+<button data-sc="grow">成長 +15%</button>
+</div>
+<label class="pl">Cat 300mg 月需求（瓶）</label><input type="number" id="p_cat" step="100">
+<label class="pl">Dog 1000mg 月需求（瓶）</label><input type="number" id="p_dog" step="100">
+<label class="pl">泰國 Blister Cat 月需求（盒）</label><input type="number" id="p_bcat" step="10">
+<label class="pl">泰國 Blister Dog 月需求（盒）</label><input type="number" id="p_bdog" step="10">
+</div>
+<div>
+<h3>供應與水位參數</h3>
+<label class="pl">原料客供週期（月）— BHS 年進口 1–2 次</label><input type="number" id="p_cycle" step="1" min="1">
+<label class="pl">原料安全覆蓋（月）</label><input type="number" id="p_safety" step="0.5" min="0">
+<label class="pl">未貼標緩衝目標（月）</label><input type="number" id="p_buffer" step="0.25" min="0">
+<label class="pl">輔料水位（前置+安全，月）</label><input type="number" id="p_auxlevel" step="0.5" min="0">
+<label class="pl">本地包材水位（月）— 蓋/盒/外箱，前置 1–2 週</label><input type="number" id="p_packlevel" step="0.25" min="0">
+</div>
+<div>
+<h3>包材採購參數</h3>
+<label class="pl">150cc 瓶 — 單次採購覆蓋（月，中國直採）</label><input type="number" id="p_bottlemonths" step="0.5" min="0.5">
+<label class="pl">40 呎櫃容量（瓶）</label><input type="number" id="p_container" step="1000">
+<label class="pl">成品外箱（瓶/箱）</label><input type="number" id="p_casefin" step="1">
+<label class="pl">未貼標外箱（瓶/箱）</label><input type="number" id="p_casebulk" step="1">
+<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+<button class="btn alt" id="btnReset">↺ 重置參數</button>
+<button class="btn" id="btnCSV">⬇ 匯出總表 CSV</button>
+<button class="btn alt" onclick="window.print()">🖨 列印</button>
+</div>
+<div class="small" style="margin-top:8px">登入雲端後，參數與庫存以伺服器為準並即時同步；未登入時為本機模式（localStorage）。</div>
+</div>
+</div></div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="card" data-sec="dash"><h2>🎛️ 儀表板（即時連動）</h2>
+<div class="dash" id="dashGauges"></div>
+<div class="grid" style="margin-top:12px">
+<div><h3 style="margin-top:0">品項狀態分佈（全模塊 40 項）</h3><div id="dashDonut"></div></div>
+<div><h3 style="margin-top:0">🔴 警報清單（覆蓋低於警戒）</h3><div class="alerts" id="dashAlerts"></div></div>
+<div><h3 style="margin-top:0">出貨目的地占比（全期真出貨）</h3><div id="dashDest"></div></div>
+</div></div>
+
+<div class="card" data-sec="master"><h2>📋 管理總表（全模塊連動）</h2>
+<div class="chips" id="fModule" style="margin-bottom:8px">
+<button data-m="all" class="on">全部模塊</button><button data-m="原料">原料</button><button data-m="半成品">半成品</button><button data-m="標籤">標籤</button><button data-m="包材">包材</button>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+<select id="fProduct" style="max-width:170px"><option value="all">產品：全部</option><option value="Cat">Cat</option><option value="Dog">Dog</option><option value="共用">共用</option><option value="泰國線">泰國線</option></select>
+<select id="fStatus" style="max-width:190px"><option value="all">狀態：全部</option><option value="red">🔴 低於警戒</option><option value="yellow">🟡 低於水位</option><option value="green">🟢 正常</option><option value="grey">⚪ 待盤點</option></select>
+<input type="text" id="fSearch" placeholder="搜尋品項 / 編碼…" style="max-width:240px">
+</div>
+<div class="tblwrap"><table id="masterTbl"><thead><tr>
+<th>模塊</th><th>編碼</th><th>品項</th><th>產品</th><th class="num">庫存（可改）</th><th>單位</th><th class="num">月用量</th><th class="num">覆蓋（月）</th><th class="num">水位</th><th class="num">應補 / 應通知</th><th>狀態</th>
+</tr></thead><tbody></tbody></table></div>
+<div class="legend">狀態規則：🔴 覆蓋 &lt; 警戒月數（原料=供應週期、半成品=0.5 月、包材=0.5 月）｜🟡 覆蓋 &lt; 水位｜🟢 達水位｜⚪ 尚無庫存數（在進銷存模塊設定期初或登記異動後即啟用判讀；庫存欄的數字來自進銷存即時計算）。標籤水位依 ABC：A 級 2 月 / B 級 3 月 / C 級 6 月。</div>
+</div>
+
+<div class="grid">
+<div class="card" data-sec="chart1"><h2>📊 圖表 1 — 原料覆蓋月數（vs 通知水位）</h2><div id="chartCover"></div>
+<div class="legend">紅線 = 通知水位（供應週期+安全）；料的覆蓋全低於水位時，優先處理最短的那支（目前是 Glutamine）。</div></div>
+<div class="card" data-sec="chart2"><h2>📊 圖表 2 — 年度生產 vs 出貨</h2>
+<div class="seg" id="histSeg"><button data-h="both" class="on">生產＋出貨</button><button data-h="in">只看生產</button><button data-h="out">只看出貨</button></div>
+<div id="chartHist"></div><div class="legend">2022–2024 連續三年出貨 &gt; 生產，差額由未貼標庫存吸收 — 緩衝就是這樣被吃光的。2026 為至 10/21 實際。</div></div>
+</div>
+
+<div class="card" data-sec="chart3"><h2>📊 圖表 3 — 標籤年用量（ABC 分級）</h2>
+<div class="seg" id="abcSeg"><button data-a="all" class="on">全部</button><button data-a="A">A 級</button><button data-a="B">B 級</button><button data-a="C">C 級</button></div>
+<div id="chartLabel"></div><div class="legend">A 級（≥10,000/年）5 種佔 88%；C 級（&lt;1,000/年）6 種合計僅 1,500 張 — 建議 C 級改數位現印，不壓庫存。</div></div>
+
+<div class="card" data-sec="plan"><h2>🏭 生產計畫連動（以批為單位）</h2>
+<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:end">
+<div><label class="pl">計畫期間</label><div class="seg" id="planSeg"><button data-pm="3">3 個月</button><button data-pm="6" class="on">6 個月</button><button data-pm="12">12 個月</button></div></div>
+<div style="width:150px"><label class="pl">Cat 批數（1 批=16,000 瓶）</label><input type="number" id="planCatBatch" step="1" min="0"></div>
+<div style="width:150px"><label class="pl">Dog 批數（1 批=7,780 瓶）</label><input type="number" id="planDogBatch" step="1" min="0"></div>
+<button class="btn alt" id="planAuto">↺ 依需求自動排批</button>
+</div>
+<div id="planSummary" class="note"></div>
+<div class="tblwrap"><table id="planTbl"><thead><tr><th>物料</th><th class="num">計畫需求 (kg)</th><th class="num">目前庫存 (kg)</th><th class="num">缺口 (kg)</th><th>判讀</th></tr></thead><tbody></tbody></table></div>
+<div class="small">包材連動（計畫期間總瓶數）：<span id="planPack"></span></div>
+</div>
+
+<div class="card" data-sec="inv"><h2>📦 進銷存與倉庫管理（異動 Log）</h2>
+<div class="small" style="margin-bottom:8px">所有流動都在這裡登記：進貨、領料、退料、倉庫轉運、出貨、貼標轉換、盤點調整、損耗。每筆自動寫入 Log，庫存 = 期初 + 全部流水，即時庫存會回灌管理總表、儀表板與生產計畫。倉庫：13859 生產/原料倉、13863 包裝/包材倉、960 暫存倉；「產線」為虛擬位置（領料後、退料前的在製量）。</div>
+<h3>新增異動</h3>
+<div class="fgrid">
+<div><label>異動類型</label><select id="tx_type">
+<option value="IN">進貨（入庫）</option><option value="ISSUE">領料（到產線）</option><option value="RETURN">退料（產線退回）</option><option value="TRANSFER">倉庫轉運</option><option value="SHIP">出貨</option><option value="CONVERT">貼標轉換（半成品→成品）</option><option value="ADJUST">盤點調整（可正負）</option><option value="SCRAP">損耗 / 報廢</option>
+</select></div>
+<div><label>品項</label><select id="tx_item"></select></div>
+<div id="tx_fg_wrap" style="display:none"><label>轉換成品（貼標後）</label><select id="tx_fg"></select></div>
+<div><label>數量</label><input type="number" id="tx_qty" step="any" min="0"></div>
+<div><label>來源位置</label><select id="tx_from"></select></div>
+<div><label>目的位置</label><select id="tx_to"></select></div>
+<div><label>批號 Lot</label><input type="text" id="tx_lot"></div>
+<div><label>單號 / PO / 批次單</label><input type="text" id="tx_ref"></div>
+<div><label>經手人</label><input type="text" id="tx_op"></div>
+<div><label>日期時間</label><input type="datetime-local" id="tx_time"></div>
+<div><label>備註</label><input type="text" id="tx_note"></div>
+</div>
+<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<button class="btn" id="tx_add">＋ 登記異動</button>
+<span class="small" id="tx_msg"></span>
+</div>
+<h3>各倉即時庫存（期初可改）</h3>
+<div class="tblwrap"><table id="whTbl"><thead><tr><th>品項</th><th>單位</th><th class="num">期初 13859</th><th class="num">期初 13863</th><th class="num">期初 960</th><th class="num">13859</th><th class="num">13863</th><th class="num">960</th><th class="num">產線在製</th><th class="num">合計</th></tr></thead><tbody></tbody></table></div>
+<div class="legend">即時庫存 = 期初 + 流水淨額。期初欄位直接改數字即生效（改期初不會寫入 Log；日常流動請一律用上方異動登記，Log 才完整）。成品 FG 為貼標轉換的入帳品項。</div>
+<h3>異動 Log（流水帳）</h3>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+<select id="log_type" style="max-width:170px"><option value="all">類型：全部</option><option value="IN">進貨</option><option value="ISSUE">領料</option><option value="RETURN">退料</option><option value="TRANSFER">轉運</option><option value="SHIP">出貨</option><option value="CONVERT">貼標轉換</option><option value="ADJUST">盤點調整</option><option value="SCRAP">損耗</option></select>
+<input type="text" id="log_search" placeholder="搜尋品項 / 批號 / 單號" style="max-width:230px">
+<button class="btn alt" id="log_csv">⬇ 匯出 Log CSV</button>
+</div>
+<div class="tblwrap"><table id="logTbl"><thead><tr><th>#</th><th>時間</th><th>類型</th><th>品項</th><th class="num">數量</th><th>來源 → 目的</th><th>批號</th><th>單號</th><th>經手</th><th>備註</th><th></th></tr></thead><tbody></tbody></table></div>
+</div>
+
+<div class="card" data-sec="cust"><h2>👥 客戶節奏（預測基線，可篩選）</h2>
+<div class="seg" id="rhythmSeg"><button data-r="all" class="on">全部客戶</button><button data-r="每月固定">每月固定（基載）</button><button data-r="季度批量">季度批量（尖峰）</button><button data-r="不定期">不定期 / 長尾</button></div>
+<div class="tblwrap"><table id="custTbl"><thead><tr><th>客戶</th><th>節奏</th><th class="num">Cat 年量</th><th class="num">Dog 年量</th><th style="width:34%">相對量</th></tr></thead><tbody></tbody></table></div>
+<div class="legend">來源：原檔 Cat Proj / Dog Proj。注意：2025 實際出貨已超過此基線總量（351,952），請以參數面板的需求情境為準，客戶表用來看「節奏型態」。</div></div>
+
+<div class="small">BHS 模塊化管理系統 v6（雲端同步版）｜與 v1.2 Excel 工作簿為同一套參數與口徑；Excel 版保留為正式記錄，本頁為日常操作版。數據：Dr._Mark_product_inventory.xlsx 全量分析 + MMR 主檔照片（2026-10-22）。</div>
+</div>
+<script>
+"use strict";
+const RM=[
+ ["RM-01","Glycine (BHS-001)",3.125,10.1028,700],
+ ["RM-02","Monosodium L-Aspartate (BHS-002)",3.125,10.1028,700],
+ ["RM-03","Monosodium L-Glutamate / MSG (BHS-003)",3.125,10.1028,704],
+ ["RM-04","L-Glutamine (BHS-004) BOTTLENECK",3.125,10.1028,375],
+ ["RM-05","L-Histidine (BHS-005)",1.5625,5.0514,375],
+ ["RM-06","L-Arginine (BHS-006)",1.5625,5.0514,375],
+ ["RM-07","L-Carnosine (BHS-007)",3.125,10.1028,725]];
+const AUX=[
+ ["AUX-01","Maltodextrin M100 (Cat only filler)",13.3513,0],
+ ["AUX-02","Magnesium Stearate",0.3275,0.6118],
+ ["AUX-03","Stearic Acid",0.3275,0.6118]];
+const BATCHKG={"RM-01":[50,78.60],"RM-02":[50,78.60],"RM-03":[50,78.60],"RM-04":[50,78.60],"RM-05":[25,39.30],"RM-06":[25,39.30],"RM-07":[50,78.60],"AUX-01":[213.62,0],"AUX-02":[5.24,4.76],"AUX-03":[5.24,4.76]};
+const LABELS=[
+ ["LB-01","AminAvast Cats (US)","US Cat",90000],["LB-02","AminAvast Dogs (US)","US Dog",48000],
+ ["LB-03","C/(Thermo Scientific)","China",18000],["LB-04","RenAvast Cats (JP)","JP Cat",15000],
+ ["LB-05","Healthypets (RE)","Retail",18000],["LB-06","C(Cattlyst)","China",6000],
+ ["LB-07","Anj (120s)","China",6000],["LB-08","DLHL(CA)","Canada",6000],
+ ["LB-09","C(Cattyman)","China",2700],["LB-10","Avex (JP)","Japan",2400],
+ ["LB-11","C(Zeal)","China",1500],["LB-12","C(Cattyman Thailand)","Thailand",600],
+ ["LB-13","JL Animal Health","UK",300],["LB-14","RenAvast Dogs (JP)","JP Dog",300],
+ ["LB-15","AMPHARMMA(France)","France",200],["LB-16","DLHL(Europe)","Europe",100],["LB-17","PHARMA(England)","UK",100]];
+const HIST=[[2020,127984,106373],[2021,244990,224057],[2022,227671,292823],[2023,204718,225043],[2024,298293,324033],[2025,391749,385664],[2026,342744,366482]];
+const CUST=[["Vedco","M",44136,17664],["Healthy Pets","M",11856,0],["Meijin Group (JP)","M",0,17520],["DKSH","M",0,6840],["Anj Co / Tiangen (CN)","Q",36000,0],["Leading Co / Zpeer","Q",45000,0],["LEAP Stores","I",46656,0],["Cens / Alex","I",15360,0],["Alcott (KR)","I",9888,0],["Mulberry","I",3360,8280],["Cats on the Boardwalk","I",3840,0],["NY Vet","I",1440,0],["Taylor / Japan Ad.","I",10296,5640],["Others","I",17326,14910]];
+const SCEN={"2025":{cat:24035,dog:8103,bcat:1189,bdog:1372},"proj":{cat:20422,dog:8908,bcat:1000,bdog:1200},"y2026":{cat:28255,dog:8264,bcat:1200,bdog:1400},"grow":{cat:27640,dog:9318,bcat:1367,bdog:1578}};
+const DEFP={cat:24035,dog:8103,bcat:1189,bdog:1372,cycle:6,safety:2,buffer:1.5,auxlevel:2,packlevel:1,bottlemonths:3,container:160000,casefin:144,casebulk:200,scenario:"2025"};
+let P=Object.assign({},DEFP);
+let stocks={};
+RM.forEach(r=>stocks[r[0]]=r[4]);
+AUX.forEach(a=>stocks[a[0]]=null);
+stocks["SF-CAT"]=14185; stocks["SF-DOG"]=735;
+stocks["PK-BOTTLE"]=31942; stocks["PK-FOIL"]=6448; stocks["PK-TBOXC"]=3635; stocks["PK-TBOXD"]=4800;
+LABELS.forEach(l=>stocks[l[0]]=null);
+["PK-PLAIN","PK-CAP","PK-DESC","PK-COIL","PK-SHRINK","PK-IBOX","PK-CASE"].forEach(k=>stocks[k]=null);
+let F={module:"all",product:"all",status:"all",search:"",abc:"all",hist:"both",rhythm:"all",planMonths:6};
+let planOverride=null;
+try{const s=JSON.parse(localStorage.getItem("bhsv2")||"null"); if(s){P=Object.assign({},DEFP,s.P||{}); Object.assign(stocks,s.stocks||{});}}catch(e){}
+function save(){try{localStorage.setItem("bhsv2",JSON.stringify({P:P,stocks:stocks}));}catch(e){} if(typeof scheduleCloudParams==="function") scheduleCloudParams(); }
+const $=id=>document.getElementById(id);
+const fmt=n=>(n==null||isNaN(n))?"--":Math.round(n).toLocaleString("en-US");
+const fmt1=n=>(n==null||isNaN(n))?"--":(Math.round(n*10)/10).toLocaleString("en-US");
+function abcOf(a){return a>=10000?"A":(a>=1000?"B":"C");}
+function statusOf(stock,monthly,critMonths,levelMonths){
+ if(stock==null) return ["grey","PENDING"];
+ if(!monthly) return ["green","OK"];
+ const cov=stock/monthly;
+ if(cov<critMonths) return ["red","LOW"];
+ if(cov<levelMonths) return ["yellow","BELOW LEVEL"];
+ return ["green","OK"];
+}
+function buildRows(){
+ const rows=[]; const tot=P.cat+P.dog;
+ RM.forEach(r=>{
+  const monthly=P.cat/1000*r[2]+P.dog/1000*r[3];
+  const lvl=P.cycle+P.safety, stock=stocks[r[0]];
+  rows.push({mod:"RM",code:r[0],name:r[1],prod:"BOTH",stock:stock,unit:"kg",monthly:monthly,
+   cov:stock==null?null:stock/monthly, level:monthly*lvl,
+   action:stock==null?null:Math.max(0,monthly*P.cycle+monthly*lvl-stock), st:statusOf(stock,monthly,P.cycle,lvl)});
+ });
+ AUX.forEach(a=>{
+  const monthly=P.cat/1000*a[2]+P.dog/1000*a[3];
+  const stock=stocks[a[0]];
+  rows.push({mod:"RM",code:a[0],name:a[1]+" (AUX)",prod:(a[2]>0&&a[3]==0)?"Cat":"BOTH",stock:stock,unit:"kg",monthly:monthly,
+   cov:stock==null?null:stock/monthly, level:monthly*P.auxlevel,
+   action:stock==null?null:Math.max(0,monthly*3+monthly*P.auxlevel-stock), st:statusOf(stock,monthly,1,P.auxlevel)});
+ });
+ [["SF-CAT","Unlabeled Cat 300mg","Cat",null],["SF-DOG","Unlabeled Dog 1000mg","Dog",null]].forEach(s=>{
+  const monthly=s[2]=="Cat"?P.cat:P.dog, stock=stocks[s[0]];
+  rows.push({mod:"SF",code:s[0],name:s[1],prod:s[2],stock:stock,unit:"btl",monthly:monthly,
+   cov:stock==null?null:stock/monthly, level:monthly*P.buffer,
+   action:stock==null?null:Math.max(0,monthly*P.buffer-stock), st:statusOf(stock,monthly,0.5,P.buffer)});
+ });
+ LABELS.forEach(l=>{
+  const monthly=l[3]/12, abc=abcOf(l[3]), lvlM=abc=="A"?2:(abc=="B"?3:6), stock=stocks[l[0]];
+  const prod=l[2].indexOf("Dog")>=0?"Dog":(l[2].indexOf("Cat")>=0?"Cat":"BOTH");
+  rows.push({mod:"LB",code:l[0],name:l[1]+" ["+l[2]+" / "+abc+"]",prod:prod,stock:stock,unit:"pcs",monthly:monthly,
+   cov:stock==null?null:stock/monthly, level:monthly*lvlM,
+   action:stock==null?null:Math.max(0,monthly*lvlM-stock), st:statusOf(stock,monthly,1,lvlM)});
+ });
+ const PK=[
+  ["PK-BOTTLE","150cc Bottle Logo (China)","BOTH","btl",tot,3,P.bottlemonths+2],
+  ["PK-PLAIN","150cc Bottle Plain","BOTH","btl",tot,0.5,P.packlevel],
+  ["PK-CAP","Closure RS38-HS (US local)","BOTH","pcs",tot,0.5,P.packlevel],
+  ["PK-DESC","Desiccant 0.5g","BOTH","pcs",tot,0.5,P.packlevel],
+  ["PK-COIL","Rayon Coil","BOTH","pcs",tot,0.5,P.packlevel],
+  ["PK-SHRINK","Shrink Band 68mm","BOTH","pcs",tot,0.5,P.packlevel],
+  ["PK-IBOX","Inner Box 9x7x4 (12 btls)","BOTH","pcs",tot/12,0.5,P.packlevel],
+  ["PK-CASE","Case ("+P.casefin+" btls/case)","BOTH","pcs",tot/P.casefin,0.5,P.packlevel],
+  ["PK-FOIL","Thai Blister Foil","THAI","pcs",P.bcat+P.bdog,0.5,P.packlevel],
+  ["PK-TBOXC","Thai Cat Box","THAI","pcs",P.bcat,0.5,P.packlevel],
+  ["PK-TBOXD","Thai Dog Box","THAI","pcs",P.bdog,0.5,P.packlevel]];
+ PK.forEach(k=>{
+  const stock=stocks[k[0]], monthly=k[4];
+  rows.push({mod:"PK",code:k[0],name:k[1],prod:k[2],stock:stock,unit:k[3],monthly:monthly,
+   cov:stock==null?null:stock/monthly, level:monthly*k[6],
+   action:stock==null?null:Math.max(0,monthly*k[6]-stock), st:statusOf(stock,monthly,k[5],k[6])});
+ });
+ return rows;
+}
+</script>
+<script>
+/* BHS v6 — Supabase data layer (no dependencies, plain fetch).
+   Model: server is the source of truth. Local INV state mirrors v5.1's
+   {opening:{code:{loc:qty}}, txns:[{id,ts,type,code,code2,qty,from,to,lot,ref,op,note,voided}], seq}
+   Writes go through the validated RPC (post_transaction / void_transaction).
+   If offline/unauthenticated-write-fails: queue locally (localStorage bhs-queue-v6)
+   with a client_uuid idempotency key and flush on reconnect/sign-in.
+   Server rejections (e.g. insufficient stock) land in a conflicts list (bhs-conflicts-v6).
+*/
+"use strict";
+const SB_URL = "https://hfhsaofxiyzftbltlygh.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmaHNhb2Z4aXl6ZnRibHRseWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3MTczOTAsImV4cCI6MjEwODI5MzM5MH0.7SQxeWPUB5qrR2gnTAZ0KXBy26ThN8EtcVcTCle2c_4";
+
+const SB = {
+  session: null,      // {access_token, refresh_token, expires_at, user:{id,email}}
+  profile: null,      // {email, role, client_id}
+  clientId: null,
+  items: [],          // server item rows
+  idByCode: {}, codeById: {},
+  paramsVersion: 1,
+  rt: null, rtRef: 2, rtHb: null, rtReady: false,
+  listeners: { auth: [], sync: [], data: [] }
+};
+
+function sbOn(ev, fn) { SB.listeners[ev].push(fn); }
+function sbEmit(ev, arg) { SB.listeners[ev].forEach(f => { try { f(arg); } catch (e) {} }); }
+
+/* ---------- session storage ---------- */
+function sbSaveSession() { try { SB.session ? localStorage.setItem("bhs-auth-v6", JSON.stringify(SB.session)) : localStorage.removeItem("bhs-auth-v6"); } catch (e) {} }
+function sbLoadSession() { try { SB.session = JSON.parse(localStorage.getItem("bhs-auth-v6") || "null"); } catch (e) { SB.session = null; } }
+sbLoadSession();
+
+/* ---------- offline queue / conflicts ---------- */
+function sbQueue() { try { return JSON.parse(localStorage.getItem("bhs-queue-v6") || "[]"); } catch (e) { return []; } }
+function sbQueueSet(q) { try { localStorage.setItem("bhs-queue-v6", JSON.stringify(q)); } catch (e) {} sbEmit("sync"); }
+function sbConflicts() { try { return JSON.parse(localStorage.getItem("bhs-conflicts-v6") || "[]"); } catch (e) { return []; } }
+function sbConflictsSet(c) { try { localStorage.setItem("bhs-conflicts-v6", JSON.stringify(c)); } catch (e) {} sbEmit("sync"); }
+function sbUuid() { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); return "q" + Date.now() + "-" + Math.floor(Math.random() * 1e9); }
+
+/* ---------- auth (GoTrue REST) ---------- */
+async function sbAuthFetch(path, body, token) {
+  const r = await fetch(SB_URL + "/auth/v1/" + path, {
+    method: "POST",
+    headers: { "apikey": SB_ANON, "Content-Type": "application/json", ...(token ? { "Authorization": "Bearer " + token } : {}) },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.msg || j.error_description || j.message || ("HTTP " + r.status));
+  return j;
+}
+function sbSetSession(j) {
+  SB.session = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000, user: j.user };
+  sbSaveSession(); sbEmit("auth");
+}
+async function sbSignIn(email, password) {
+  const j = await sbAuthFetch("token?grant_type=password", { email, password });
+  sbSetSession(j);
+  await sbLoadAll();
+  sbFlushQueue();
+  return SB.profile;
+}
+async function sbRefresh() {
+  if (!SB.session || !SB.session.refresh_token) return false;
+  try { const j = await sbAuthFetch("token?grant_type=refresh_token", { refresh_token: SB.session.refresh_token }); sbSetSession(j); return true; }
+  catch (e) { return false; }
+}
+async function sbToken() {
+  if (!SB.session) return null;
+  if (Date.now() > SB.session.expires_at - 60000) { if (!await sbRefresh()) { SB.session = null; sbSaveSession(); sbEmit("auth"); return null; } }
+  return SB.session.access_token;
+}
+function sbSignOut() { SB.session = null; SB.profile = null; sbSaveSession(); sbRtStop(); sbEmit("auth"); }
+async function sbRecover(email, redirectTo) { return sbAuthFetch("recover", { email, redirect_to: redirectTo }); }
+async function sbSetPassword(newPassword) {
+  const tk = await sbToken(); if (!tk) throw new Error("no session");
+  const r = await fetch(SB_URL + "/auth/v1/user", { method: "PUT", headers: { "apikey": SB_ANON, "Authorization": "Bearer " + tk, "Content-Type": "application/json" }, body: JSON.stringify({ password: newPassword }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.msg || j.message || ("HTTP " + r.status));
+  return j;
+}
+/* Capture tokens from invite / recovery links (#access_token=...&type=invite|recovery) */
+async function sbCaptureHash() {
+  if (!location.hash || location.hash.indexOf("access_token=") < 0) return null;
+  const h = new URLSearchParams(location.hash.slice(1));
+  const at = h.get("access_token"), rt = h.get("refresh_token"), type = h.get("type");
+  if (!at) return null;
+  SB.session = { access_token: at, refresh_token: rt, expires_at: Date.now() + 3500 * 1000, user: null };
+  try {
+    const u = await fetch(SB_URL + "/auth/v1/user", { headers: { "apikey": SB_ANON, "Authorization": "Bearer " + at } }).then(r => r.json());
+    if (u && u.id) SB.session.user = u;
+  } catch (e) {}
+  sbSaveSession();
+  try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  sbEmit("auth");
+  return type;
+}
+
+/* ---------- data REST (PostgREST) ---------- */
+async function sbRest(path, opts) {
+  opts = opts || {};
+  const tk = await sbToken(); if (!tk) throw new Error("not signed in");
+  const r = await fetch(SB_URL + "/rest/v1/" + path, {
+    method: opts.method || "GET",
+    headers: { "apikey": SB_ANON, "Authorization": "Bearer " + tk, "Content-Type": "application/json", ...(opts.headers || {}) },
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
+  });
+  if (r.status === 204) return null;
+  const j = await r.json().catch(() => null);
+  if (!r.ok) throw new Error((j && (j.message || j.details || j.hint)) || ("HTTP " + r.status));
+  return j;
+}
+async function sbFetchAll(path) {
+  let out = [], from = 0; const size = 1000;
+  while (true) {
+    const rows = await sbRest(path, { headers: { "Range-Unit": "items", "Range": from + "-" + (from + size - 1) } });
+    out = out.concat(rows || []);
+    if (!rows || rows.length < size) break;
+    from += size;
+  }
+  return out;
+}
+async function sbRpc(fn, args) { return sbRest("rpc/" + fn, { method: "POST", body: args }); }
+
+/* ---------- load server state into the v5.1 INV shape ---------- */
+function sbMapTx(t) {
+  return { id: t.id, ts: (t.ts || "").slice(0, 16).replace("T", " "), type: t.type, code: SB.codeById[t.item_id] || "?", code2: t.item2_id ? (SB.codeById[t.item2_id] || null) : null,
+    qty: +t.qty, from: t.from_code, to: t.to_code, lot: t.lot || "", ref: t.ref || "", op: t.operator_name || "", note: t.note || "", voided: !!t.voided };
+}
+async function sbLoadAll() {
+  const prof = await sbRest("profiles?select=email,role,client_id");
+  if (!prof || !prof.length) throw new Error("This account has no profile / role yet. Ask the admin to grant one.");
+  SB.profile = prof[0]; SB.clientId = prof[0].client_id;
+  const items = await sbFetchAll("items?select=*&order=code.asc");
+  SB.items = items; SB.idByCode = {}; SB.codeById = {};
+  items.forEach(i => { SB.idByCode[i.code] = i.id; SB.codeById[i.id] = i.code; });
+  const ops = await sbFetchAll("opening_balances?select=item_id,warehouse_code,qty");
+  const opening = {};
+  ops.forEach(o => { const c = SB.codeById[o.item_id]; if (!c) return; (opening[c] = opening[c] || {})[o.warehouse_code] = +o.qty; });
+  const txs = await sbFetchAll("transactions?select=*&order=id.asc");
+  const log = txs.map(sbMapTx);
+  const seq = (txs.length ? txs[txs.length - 1].id : 0) + 1;
+  const prm = await sbRest("app_params?select=params,version");
+  let params = null;
+  if (prm && prm.length) { params = prm[0].params; SB.paramsVersion = prm[0].version || 1; }
+  sbRtStart();
+  sbEmit("data", { opening, txns: log, seq, params });
+  return { opening, txns: log, seq, params };
+}
+async function sbReloadTxns() {
+  if (!SB.session || !SB.profile) return;
+  const txs = await sbFetchAll("transactions?select=*&order=id.asc");
+  sbEmit("data", { txnsOnly: txs.map(sbMapTx), seq: (txs.length ? txs[txs.length - 1].id : 0) + 1 });
+}
+
+/* ---------- writes ---------- */
+function sbMovementArgs(m) {
+  return { p_type: m.type, p_item_code: m.code, p_item2_code: m.code2 || null, p_qty: m.qty, p_from: m.from, p_to: m.to,
+    p_lot: m.lot || null, p_ref: m.ref || null, p_note: m.note || null, p_client_uuid: m.uuid || sbUuid() };
+}
+async function sbPostMovement(m) {
+  const args = sbMovementArgs(m);
+  if (!SB.session || !navigator.onLine) { const q = sbQueue(); q.push({ args, queuedAt: new Date().toISOString() }); sbQueueSet(q); return { queued: true }; }
+  try { const res = await sbRpc("post_transaction", args); await sbReloadTxns(); return { posted: true, res }; }
+  catch (e) {
+    if (/insufficient|unknown item|role/i.test(e.message)) throw e; // server verdict: do not queue, caller shows it
+    const q = sbQueue(); q.push({ args, queuedAt: new Date().toISOString(), err: e.message }); sbQueueSet(q); return { queued: true, err: e.message };
+  }
+}
+async function sbFlushQueue() {
+  if (!SB.session) return;
+  let q = sbQueue(); if (!q.length) return;
+  const remain = [], conf = sbConflicts(); let changed = false;
+  for (const item of q) {
+    try { await sbRpc("post_transaction", item.args); changed = true; }
+    catch (e) {
+      if (/insufficient|unknown item/i.test(e.message)) { conf.push({ args: item.args, err: e.message, at: new Date().toISOString() }); changed = true; }
+      else remain.push(item);
+    }
+  }
+  sbQueueSet(remain); sbConflictsSet(conf);
+  if (changed && !remain.length) await sbReloadTxns();
+  sbEmit("sync");
+}
+async function sbVoid(id, reason) {
+  const res = await sbRpc("void_transaction", { p_id: id, p_reason: reason });
+  await sbReloadTxns();
+  return res;
+}
+async function sbSetOpening(code, loc, qty) {
+  const itemId = SB.idByCode[code]; if (!itemId) throw new Error("unknown item " + code);
+  if (qty === null || qty === undefined) {
+    return sbRest("opening_balances?client_id=eq." + SB.clientId + "&item_id=eq." + itemId + "&warehouse_code=eq." + encodeURIComponent(loc), { method: "DELETE" });
+  }
+  return sbRest("opening_balances?on_conflict=client_id,item_id,warehouse_code", {
+    method: "POST", headers: { "Prefer": "resolution=merge-duplicates" },
+    body: { client_id: SB.clientId, item_id: itemId, warehouse_code: loc, qty: qty, updated_by: SB.session.user.id }
+  });
+}
+async function sbSaveParams(params) {
+  SB.paramsVersion = (SB.paramsVersion || 1) + 1;
+  return sbRest("app_params?client_id=eq." + SB.clientId, {
+    method: "PATCH", headers: { "Prefer": "return=minimal" },
+    body: { params: params, version: SB.paramsVersion, updated_by: SB.session.user.id }
+  });
+}
+
+/* ---------- realtime (minimal Phoenix client on transactions) ---------- */
+function sbRtStart() {
+  if (SB.rt || !SB.session) return;
+  try {
+    const ws = new WebSocket(SB_URL.replace("https://", "wss://") + "/realtime/v1/websocket?apikey=" + SB_ANON + "&vsn=1.0.0");
+    SB.rt = ws;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ topic: "realtime:public:transactions", event: "phx_join", ref: String(SB.rtRef++), join_ref: "1",
+        payload: { config: { broadcast: { ack: false, self: false }, presence: { key: "" }, postgres_changes: [{ event: "*", schema: "public", table: "transactions" }] }, access_token: SB.session.access_token } }));
+      SB.rtHb = setInterval(() => { try { ws.send(JSON.stringify({ topic: "phoenix", event: "heartbeat", payload: {}, ref: String(SB.rtRef++) })); } catch (e) {} }, 25000);
+    };
+    ws.onmessage = (m) => { try { const j = JSON.parse(m.data); if (j.event === "postgres_changes") sbDebouncedReload(); } catch (e) {} };
+    ws.onclose = () => { sbRtStop(); };
+    ws.onerror = () => { try { ws.close(); } catch (e) {} };
+  } catch (e) {}
+}
+function sbRtStop() { if (SB.rtHb) clearInterval(SB.rtHb); SB.rtHb = null; if (SB.rt) { try { SB.rt.close(); } catch (e) {} SB.rt = null; } }
+let _sbDbT = null;
+function sbDebouncedReload() { clearTimeout(_sbDbT); _sbDbT = setTimeout(() => { sbReloadTxns().catch(() => {}); }, 800); }
+window.addEventListener("online", () => { sbEmit("sync"); sbFlushQueue(); });
+window.addEventListener("offline", () => sbEmit("sync"));
+document.addEventListener("visibilitychange", () => { if (!document.hidden && SB.session) sbReloadTxns().catch(() => {}); });
+
+</script>
+<script>
+"use strict";
+let LANG="zh"; try{LANG=localStorage.getItem("bhs-lang")||"zh";}catch(e){}
+function L(zh,en){return LANG=="zh"?zh:en;}
+const MODNAME_ZH={RM:"原料",SF:"半成品",LB:"標籤",PK:"包材"};
+const MODNAME_EN={RM:"Raw Mat.",SF:"Semi-fin.",LB:"Labels",PK:"Packaging"};
+const PRODNAME_ZH={Cat:"Cat",Dog:"Dog",BOTH:"共用",THAI:"泰國線"};
+const PRODNAME_EN={Cat:"Cat",Dog:"Dog",BOTH:"Shared",THAI:"Thailand"};
+const STXT_ZH={red:"🔴 不足",yellow:"🟡 低於水位",green:"🟢 正常",grey:"⚪ 待盤點"};
+const STXT_EN={red:"🔴 Low",yellow:"🟡 Below level",green:"🟢 OK",grey:"⚪ No count"};
+let MODNAME=MODNAME_ZH, PRODNAME=PRODNAME_ZH, STXT=STXT_ZH;
+const CHIP2MOD={"原料":"RM","半成品":"SF","標籤":"LB","包材":"PK"};
+const SEL2PROD={"Cat":"Cat","Dog":"Dog","共用":"BOTH","泰國線":"THAI"};
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function filteredRows(rows){
+ return rows.filter(r=>{
+  if(F.module!="all"&&r.mod!=F.module) return false;
+  if(F.product!="all"&&r.prod!=F.product&&r.prod!="BOTH") return false;
+  if(F.status!="all"&&r.st[0]!=F.status) return false;
+  if(F.search){const q=F.search.toLowerCase(); if((r.name+" "+r.code).toLowerCase().indexOf(q)<0) return false;}
+  return true;
+ });
+}
+function renderMaster(){
+ const rows=filteredRows(buildRows());
+ const tb=document.querySelector("#masterTbl tbody"); let h="";
+ rows.forEach(r=>{
+  h+="<tr><td>"+MODNAME[r.mod]+"</td><td>"+r.code+"</td><td>"+esc(r.name)+"</td><td>"+PRODNAME[r.prod]+"</td>"
+   +"<td class='num'>"+(r.stock==null?L('待盤點','no count'):fmt(r.stock))+" <button class='btn alt' data-jump='"+r.code+"' style='padding:1px 8px;font-size:12px'>"+L('異動','Move')+"</button></td>"
+   +"<td>"+r.unit+"</td><td class='num'>"+fmt(r.monthly)+"</td><td class='num'>"+fmt1(r.cov)+"</td>"
+   +"<td class='num'>"+fmt(r.level)+"</td><td class='num'>"+fmt(r.action)+"</td>"
+   +"<td><span class='pill "+r.st[0]+"'>"+STXT[r.st[0]]+"</span></td></tr>";
+ });
+ tb.innerHTML=h||"<tr><td colspan='11'>"+L("（此篩選下沒有品項）","(No items under this filter)")+"</td></tr>";
+ tb.querySelectorAll("[data-jump]").forEach(btn=>{
+  btn.addEventListener("click",()=>{ const sel=$("tx_item"); if(sel){ sel.value=btn.getAttribute("data-jump"); } const f=$("tx_qty"); if(f){ f.focus(); } window.scrollTo({top:document.getElementById("tx_type").getBoundingClientRect().top+window.scrollY-140,behavior:"smooth"}); });
+ });
+}
+function renderKPIs(){
+ const rows=buildRows();
+ const rmRows=rows.filter(r=>r.mod=="RM");
+ const rmKg=rmRows.reduce((a,r)=>a+r.monthly,0);
+ let worst=null; rmRows.forEach(r=>{if(r.cov!=null&&(worst==null||r.cov<worst.cov)) worst=r;});
+ const reds=rows.filter(r=>r.st[0]=="red").length;
+ const dog=rows.find(r=>r.code=="SF-DOG");
+ const bottle=rows.find(r=>r.code=="PK-BOTTLE");
+ const sug=(P.cat+P.dog)*P.bottlemonths;
+ const tot=P.cat+P.dog;
+ const k=[
+  [L('月總需求','Bottles/mo'),fmt(tot),fmt(P.cat)+" Cat"],
+  [L('原料月用量 kg','RM kg/mo'),fmt(rmKg),"7 RM + AUX"],
+  [L('最短覆蓋原料','Shortest cover'),worst?esc(worst.name.split(" (")[0]):"--",worst?fmt1(worst.cov)+L(' 月',' mo'):L('待盤點','n/a')],
+  [L('警戒品項','RED items'),reds+"",L('用狀態篩選查看','see status filter')],
+  [L('Dog 半成品覆蓋','Dog SF cover'),fmt1(dog.cov)+L(' 月',' mo'),L('帳面 ','book ')+fmt(dog.stock)],
+  [L('瓶子庫存覆蓋','Bottle cover'),fmt1(bottle.cov)+L(' 月',' mo'),L('建議訂 ','order ')+fmt(sug)+" = "+(sug/P.container).toFixed(2)+L(' 櫃',' ctr')]];
+ var kh="";
+ k.forEach(x=>{kh+="<div class=\x27kpi\x27><span>"+x[2]+"</span><b>"+x[1]+"</b><span>"+x[0]+"</span></div>";});
+ $("kpis").innerHTML=kh;
+}
+function svgBarsH(items,maxV,levelV,unit){
+ const W=560,bh=26,gap=8,lab=150,vw=W-lab-70;
+ let H=items.length*(bh+gap)+30;
+ let s="<svg viewBox=\x270 0 "+W+" "+H+"\x27>";
+ const lx=lab+vw*(levelV/maxV);
+ s+="<line x1=\x27"+lx+"\x27 y1=\x270\x27 x2=\x27"+lx+"\x27 y2=\x27"+(H-22)+"\x27 stroke=\x27#c0392b\x27 stroke-dasharray=\x275 4\x27 stroke-width=\x271.6\x27/>";
+ s+="<text x=\x27"+lx+"\x27 y=\x27"+(H-6)+"\x27 font-size=\x2711\x27 fill=\x27#c0392b\x27 text-anchor=\x27middle\x27>"+L('水位 ','Level ')+fmt1(levelV)+L(' 月',' mo')+"</text>";
+ items.forEach((it,i)=>{
+  const y=i*(bh+gap)+4, w=Math.max(2,vw*(it.v/maxV));
+  const col=it.v<levelV?"#c0392b":"#2e75b6";
+  s+="<text x=\x27"+(lab-6)+"\x27 y=\x27"+(y+17)+"\x27 font-size=\x2712\x27 text-anchor=\x27end\x27>"+esc(it.label)+"</text>";
+  s+="<rect x=\x27"+lab+"\x27 y=\x27"+y+"\x27 width=\x27"+w+"\x27 height=\x27"+bh+"\x27 fill=\x27"+col+"\x27 rx=\x273\x27/>";
+  s+="<text x=\x27"+(lab+w+6)+"\x27 y=\x27"+(y+17)+"\x27 font-size=\x2712\x27>"+fmt1(it.v)+" "+unit+"</text>";
+ });
+ return s+"</svg>";
+}
+function renderChartCover(){
+ const data=RM.map(r=>{const stock=stocks[r[0]]; const monthly=P.cat/1000*r[2]+P.dog/1000*r[3];
+  return {label:r[1].split(" (")[0], v:stock==null?0:stock/monthly};});
+ const lvl=P.cycle+P.safety;
+ const maxV=Math.max(lvl*1.25, ...data.map(d=>d.v));
+ $("chartCover").innerHTML=svgBarsH(data,maxV,lvl,L('月','mo'));
+}
+function renderChartHist(){
+ const W=560,H=260,base=225,top=25,vw=64,maxV=420000;
+ const gap=(W-40-7*vw)/6;
+ let s="<svg viewBox=\x270 0 "+W+" "+H+"\x27><line x1=\x2730\x27 y1=\x27"+base+"\x27 x2=\x27"+(W-10)+"\x27 y2=\x27"+base+"\x27 stroke=\x27#999\x27/>";
+ HIST.forEach((y,i)=>{
+  const x=40+i*(vw+gap); const bw=F.hist=="both"?vw/2-2:vw-6;
+  if(F.hist!="out"){const hh=(base-top)*(y[1]/maxV); s+="<rect x=\x27"+x+"\x27 y=\x27"+(base-hh)+"\x27 width=\x27"+bw+"\x27 height=\x27"+hh+"\x27 fill=\x27#2e75b6\x27 rx=\x272\x27/><text x=\x27"+(x+bw/2)+"\x27 y=\x27"+(base-hh-4)+"\x27 font-size=\x2710\x27 text-anchor=\x27middle\x27>"+Math.round(y[1]/1000)+"k</text>";}
+  if(F.hist!="in"){const hh=(base-top)*(y[2]/maxV); const x2=F.hist=="both"?x+bw+4:x; s+="<rect x=\x27"+x2+"\x27 y=\x27"+(base-hh)+"\x27 width=\x27"+bw+"\x27 height=\x27"+hh+"\x27 fill=\x27#e08a2e\x27 rx=\x272\x27/><text x=\x27"+(x2+bw/2)+"\x27 y=\x27"+(base-hh-4)+"\x27 font-size=\x2710\x27 text-anchor=\x27middle\x27>"+Math.round(y[2]/1000)+"k</text>";}
+  s+="<text x=\x27"+(x+vw/2)+"\x27 y=\x27"+(base+16)+"\x27 font-size=\x2711\x27 text-anchor=\x27middle\x27>"+y[0]+"</text>";
+ });
+ s+="<text x=\x2740\x27 y=\x2714\x27 font-size=\x2711\x27 fill=\x27#2e75b6\x27>"+L('生產入庫','Prod IN')+"</text><text x=\x27130\x27 y=\x2714\x27 font-size=\x2711\x27 fill=\x27#e08a2e\x27>"+L('真出貨','Ship OUT')+"</text></svg>";
+ $("chartHist").innerHTML=s;
+}
+function renderChartLabel(){
+ let list=LABELS.filter(l=>F.abc=="all"||abcOf(l[3])==F.abc).slice().sort((a,b)=>b[3]-a[3]);
+ const W=560,H=250,base=205,top=20,maxV=95000;
+ const bw=Math.min(26,(W-50)/list.length-8);
+ let s="<svg viewBox=\x270 0 "+W+" "+H+"\x27><line x1=\x2730\x27 y1=\x27"+base+"\x27 x2=\x27"+(W-10)+"\x27 y2=\x27"+base+"\x27 stroke=\x27#999\x27/>";
+ list.forEach((l,i)=>{
+  const x=40+i*((W-50)/list.length); const hh=(base-top)*(l[3]/maxV); const abc=abcOf(l[3]);
+  const col=abc=="A"?"#2e75b6":(abc=="B"?"#7fb2e0":"#c3d2e6");
+  s+="<rect x=\x27"+x+"\x27 y=\x27"+(base-hh)+"\x27 width=\x27"+bw+"\x27 height=\x27"+hh+"\x27 fill=\x27"+col+"\x27 rx=\x272\x27/>";
+  s+="<text x=\x27"+(x+bw/2)+"\x27 y=\x27"+(base-hh-4)+"\x27 font-size=\x279\x27 text-anchor=\x27middle\x27>"+(l[3]/1000)+"k</text>";
+  s+="<text x=\x27"+(x+bw/2)+"\x27 y=\x27"+(base+14)+"\x27 font-size=\x279\x27 text-anchor=\x27middle\x27>"+l[0].replace("LB-","")+"</text>";
+  s+="<text x=\x27"+(x+bw/2)+"\x27 y=\x27"+(base+27)+"\x27 font-size=\x279\x27 text-anchor=\x27middle\x27 fill=\x27#666\x27>"+abc+"</text>";
+ });
+ $("chartLabel").innerHTML=s+"</svg>";
+}
+function planBatches(){
+ if(planOverride) return planOverride;
+ return {cat:Math.ceil(P.cat*F.planMonths/16000), dog:Math.ceil(P.dog*F.planMonths/7780)};
+}
+function renderPlan(){
+ const b=planBatches();
+ if(document.activeElement!==$("planCatBatch")) $("planCatBatch").value=b.cat;
+ if(document.activeElement!==$("planDogBatch")) $("planDogBatch").value=b.dog;
+ const names={}; RM.forEach(r=>names[r[0]]=r[1]); AUX.forEach(a=>names[a[0]]=a[1]);
+ let h="", totNeed=0;
+ Object.keys(BATCHKG).forEach(code=>{
+  const need=b.cat*BATCHKG[code][0]+b.dog*BATCHKG[code][1]; totNeed+=need;
+  const stock=stocks[code];
+  const gap=stock==null?null:Math.max(0,need-stock);
+  const judge=stock==null?L('待盤點','PENDING'):(gap>0?L('缺 ','SHORT ')+fmt(gap)+" kg":L('足夠','OK'));
+  h+="<tr><td>"+esc(names[code])+"</td><td class=\x27num\x27>"+fmt(need)+"</td><td class=\x27num\x27>"+fmt(stock)+"</td><td class=\x27num\x27>"+fmt(gap)+"</td><td>"+judge+"</td></tr>";
+ });
+ document.querySelector("#planTbl tbody").innerHTML=h;
+ const bottles=b.cat*16000+b.dog*7780;
+ $("planSummary").innerHTML=L('計畫期間 ','Plan ')+"<b>"+F.planMonths+L(' 個月',' mo')+"</b>: Cat <b>"+b.cat+"</b> "+L('批','batches')+" ("+fmt(b.cat*16000)+L(' 瓶',' btl')+") + Dog <b>"+b.dog+"</b> "+L('批','batches')+" ("+fmt(b.dog*7780)+L(' 瓶',' btl')+"); "+L('混料總需求 ','blend total ')+"<b>"+fmt(totNeed)+" kg</b>.";
+ $("planPack").innerHTML=L('瓶/蓋/標籤/乾燥劑/棉卷/收縮膜: ','Bottles/caps/labels/desiccant/coils/bands: ')+fmt(bottles)+L('; 內盒: ','; inner boxes: ')+fmt(bottles/12)+L('; 外箱: ','; cases: ')+fmt(bottles/P.casefin)+".";
+}
+function renderCust(){
+ const RN=LANG=="zh"?{M:"每月固定",Q:"季度批量",I:"不定期"}:{M:"Monthly",Q:"Quarterly",I:"Irregular"};
+ const list=CUST.filter(c=>F.rhythm=="all"||c[1]==F.rhythm);
+ const maxV=Math.max(...CUST.map(c=>c[2]+c[3]));
+ let h="";
+ list.forEach(c=>{const t=c[2]+c[3]; const w=Math.round(t/maxV*100);
+  h+="<tr><td>"+esc(c[0])+"</td><td>"+RN[c[1]]+"</td><td class=\x27num\x27>"+fmt(c[2])+"</td><td class=\x27num\x27>"+fmt(c[3])+"</td><td><div style=\x27background:#2e75b6;height:13px;border-radius:3px;width:"+w+"%\x27></div></td></tr>";});
+ document.querySelector("#custTbl tbody").innerHTML=h;
+}
+function arcPt(cx,cy,r,f){const a=Math.PI*(1-f); return (cx+r*Math.cos(a)).toFixed(1)+" "+(cy-r*Math.sin(a)).toFixed(1);}
+function gaugeSVG(v,max,crit,level,unit){
+ if(v==null) return "<div class='gv'>—</div><div class='gs'>"+L('待盤點','No count')+"</div>";
+ const f=Math.max(0,Math.min(1,v/max));
+ const col=v<crit?"#c0392b":(v<level?"#d9a400":"#3d9970");
+ const d="M "+arcPt(100,95,78,0)+" A 78 78 0 0 1 "+arcPt(100,95,78,f);
+ return "<svg viewBox='0 0 200 112'><path d='M "+arcPt(100,95,78,0)+" A 78 78 0 0 1 "+arcPt(100,95,78,1)+"' fill='none' stroke='#e2e8f2' stroke-width='15'/>"
+  +"<path d='"+d+"' fill='none' stroke='"+col+"' stroke-width='15' stroke-linecap='round'/>"
+  +"<text x='100' y='84' font-size='24' font-weight='700' text-anchor='middle' fill='#1f3864'>"+fmt1(v)+"</text>"
+  +"<text x='100' y='103' font-size='11.5' text-anchor='middle' fill='#5a6a7d'>"+unit+" - "+L('水位','Level')+" "+fmt1(level)+"</text></svg>";
+}
+function renderDashboard(){
+ const rows=buildRows();
+ const g=id=>rows.find(r=>r.code==id);
+ const gl=g("RM-04"), sfD=g("SF-DOG"), sfC=g("SF-CAT"), bt=g("PK-BOTTLE");
+ const cards=[
+  [L('原料瓶頸 Glutamine 覆蓋','Bottleneck: Glutamine'), gaugeSVG(gl.cov, P.cycle+P.safety+2, P.cycle, P.cycle+P.safety, L('個月','mo')), L('月用量 ','Usage ')+fmt(gl.monthly)+" kg"],
+  [L('Dog 半成品覆蓋','Dog semi-fin. cover'), gaugeSVG(sfD.cov, 3, 0.5, P.buffer, L('個月','mo')), L('帳面 ','Book ')+fmt(sfD.stock)+L(' 瓶',' btl')],
+  [L('Cat 半成品覆蓋','Cat semi-fin. cover'), gaugeSVG(sfC.cov, 3, 0.5, P.buffer, L('個月','mo')), L('帳面 ','Book ')+fmt(sfC.stock)+L(' 瓶',' btl')],
+  [L('150cc 瓶庫存覆蓋','150cc bottle cover'), gaugeSVG(bt.cov, 7, P.bottlemonths, P.bottlemonths+2, L('個月','mo')), L('月用量 ','Usage ')+fmt(bt.monthly)+L(' 瓶',' btl')]];
+ $("dashGauges").innerHTML=cards.map(c=>"<div class='gauge'><div class='gt'>"+c[0]+"</div>"+c[1]+"<div class='gs'>"+c[2]+"</div></div>").join("");
+ const cnt={red:0,yellow:0,green:0,grey:0}; rows.forEach(r=>cnt[r.st[0]]++);
+ const C=326.7; let off=0, segs="";
+ [["red","#c0392b"],["yellow","#d9a400"],["green","#3d9970"],["grey","#8a97a5"]].forEach(kv=>{
+  const frac=cnt[kv[0]]/rows.length;
+  segs+="<circle cx='70' cy='70' r='52' fill='none' stroke='"+kv[1]+"' stroke-width='20' stroke-dasharray='"+(frac*C)+" "+C+"' stroke-dashoffset='"+(-off)+"' transform='rotate(-90 70 70)'/>";
+  off+=frac*C; });
+ $("dashDonut").innerHTML="<div style='display:flex;gap:12px;align-items:center;flex-wrap:wrap'><svg viewBox='0 0 140 140' style='width:128px'>"+segs+"<text x='70' y='66' font-size='19' font-weight='700' text-anchor='middle' fill='#1f3864'>"+rows.length+"</text><text x='70' y='84' font-size='10.5' text-anchor='middle' fill='#5a6a7d'>"+L('品項','items')+"</text></svg>"
+  +"<div class='small'>"+STXT.red+" <b>"+cnt.red+"</b><br>"+STXT.yellow+" <b>"+cnt.yellow+"</b><br>"+STXT.green+" <b>"+cnt.green+"</b><br>"+STXT.grey+" <b>"+cnt.grey+"</b></div></div>";
+ const reds=rows.filter(r=>r.st[0]=="red");
+ $("dashAlerts").innerHTML=reds.length?reds.map(r=>"<div>🔴 <b>"+esc(r.name)+"</b> ("+MODNAME[r.mod]+") - "+L('覆蓋 ','cover ')+fmt1(r.cov)+L(' 月, 應補/通知 ',' mo, order/notify ')+fmt(r.action)+" "+r.unit+"</div>").join(""):"<div>"+L('目前沒有紅色警報','No red alerts')+" 🎉</div>";
+ const DEST=[[L('Vedco 美國經銷','Vedco - US distributor'),396982],[L('中國合計','China total'),376940],[L('日本 - 未貼標散裝','Japan - unlabeled bulk'),220403],[L('泰國 Blister 線','Thailand Blister line'),137798],["LEAP Stores",126916],[L('其他','Others'),724996]];
+ const totD=DEST.reduce((a,d)=>a+d[1],0);
+ $("dashDest").innerHTML=DEST.map(d=>{const w=Math.round(d[1]/totD*100);
+  return "<div style='margin:5px 0'><div style='display:flex;justify-content:space-between;font-size:12.5px'><span>"+d[0]+"</span><span>"+(d[1]/totD*100).toFixed(1)+"%</span></div><div style='background:#e2e8f2;border-radius:3px'><div style='background:#2e75b6;height:11px;border-radius:3px;width:"+w+"%'></div></div></div>";}).join("");
+}
+/* ===== Inventory engine: opening + transaction log ===== */
+const WHS=["13859","13863","960"];
+const PKREG=[["PK-BOTTLE","150cc Bottle Logo","btl"],["PK-PLAIN","150cc Bottle Plain","btl"],["PK-CAP","Closure RS38-HS","pcs"],["PK-DESC","Desiccant 0.5g","pcs"],["PK-COIL","Rayon Coil","pcs"],["PK-SHRINK","Shrink Band 68mm","pcs"],["PK-IBOX","Inner Box 9x7x4","pcs"],["PK-CASE","Case","pcs"],["PK-FOIL","Thai Blister Foil","pcs"],["PK-TBOXC","Thai Cat Box","pcs"],["PK-TBOXD","Thai Dog Box","pcs"]];
+const ITEMREG=[];
+RM.forEach(r=>ITEMREG.push({code:r[0],name:r[1],unit:"kg",grp:"RM"}));
+AUX.forEach(a=>ITEMREG.push({code:a[0],name:a[1],unit:"kg",grp:"RM"}));
+ITEMREG.push({code:"SF-CAT",name:"Unlabeled Cat 300mg",unit:"btl",grp:"SF"});
+ITEMREG.push({code:"SF-DOG",name:"Unlabeled Dog 1000mg",unit:"btl",grp:"SF"});
+LABELS.forEach(l=>ITEMREG.push({code:l[0],name:l[1],unit:"pcs",grp:"LB"}));
+PKREG.forEach(k=>ITEMREG.push({code:k[0],name:k[1],unit:k[2],grp:"PK"}));
+LABELS.forEach((l,i)=>ITEMREG.push({code:"FG-"+l[0].replace("LB-",""),name:"Finished: "+l[1],unit:"btl",grp:"FG"}));
+const ITEMMAP={}; ITEMREG.forEach(it=>ITEMMAP[it.code]=it);
+let INV={opening:{},txns:[],seq:1};
+(function(){ const def={};
+ RM.forEach(r=>{def[r[0]]={"13859":r[4]};});
+ def["SF-CAT"]={"13859":14185}; def["SF-DOG"]={"13859":735};
+ def["PK-BOTTLE"]={"13863":31942}; def["PK-FOIL"]={"13863":6448}; def["PK-TBOXC"]={"13863":3635}; def["PK-TBOXD"]={"13863":4800};
+ INV.opening=def;
+ try{const s=JSON.parse(localStorage.getItem("bhs-cache-v6")||"null"); if(s&&s.opening){INV=s;}}catch(e){}
+})();
+function invSave(){ try{localStorage.setItem("bhs-cache-v6",JSON.stringify(INV));}catch(e){} }
+function invKnown(code){ if(INV.opening[code]) return true; return INV.txns.some(t=>!t.voided&&(t.code==code||t.code2==code)); }
+function invBalances(){
+ const bal={};
+ ITEMREG.forEach(it=>{ const o=INV.opening[it.code]||{}; bal[it.code]={"13859":o["13859"]||0,"13863":o["13863"]||0,"960":o["960"]||0,"PROD":0}; });
+ INV.txns.forEach(t=>{ if(t.voided) return; const b=bal[t.code]; if(!b) return; const q=t.qty;
+  if(t.type=="IN") b[t.to]+=q;
+  else if(t.type=="ISSUE"){ b[t.from]-=q; b["PROD"]+=q; }
+  else if(t.type=="RETURN"){ b["PROD"]-=q; b[t.to]+=q; }
+  else if(t.type=="TRANSFER"){ b[t.from]-=q; b[t.to]+=q; }
+  else if(t.type=="SHIP"){ b[t.from]-=q; }
+  else if(t.type=="SCRAP"){ b[t.from]-=q; }
+  else if(t.type=="ADJUST"){ b[t.to]+=q; }
+  else if(t.type=="CONVERT"){ b[t.from]-=q; const b2=bal[t.code2]; if(b2) b2[t.from]+=q; }
+ });
+ return bal;
+}
+function refreshStocks(){
+ const bal=invBalances();
+ ITEMREG.forEach(it=>{ if(it.grp=="FG") return;
+  if(invKnown(it.code)){ const b=bal[it.code]; stocks[it.code]=b["13859"]+b["13863"]+b["960"]; }
+  else stocks[it.code]=null;
+ });
+}
+function renderAll(paramsToo){
+ refreshStocks(); renderKPIs(); renderDashboard(); renderMaster(); renderChartCover(); renderChartHist(); renderChartLabel(); renderPlan(); renderCust(); renderWh(); renderLog();
+ if(paramsToo) renderParams();
+}
+function renderParams(){
+ Object.keys(PMAP).forEach(id=>{const el=$(id); if(el) el.value=P[PMAP[id]];});
+ document.querySelectorAll("#scenarioSeg button").forEach(b=>b.classList.toggle("on",b.getAttribute("data-sc")==P.scenario));
+}
+const PMAP={p_cat:"cat",p_dog:"dog",p_bcat:"bcat",p_bdog:"bdog",p_cycle:"cycle",p_safety:"safety",p_buffer:"buffer",p_auxlevel:"auxlevel",p_packlevel:"packlevel",p_bottlemonths:"bottlemonths",p_container:"container",p_casefin:"casefin",p_casebulk:"casebulk"};
+Object.keys(PMAP).forEach(id=>{
+ const el=$(id); if(!el) return;
+ el.addEventListener("input",()=>{const v=parseFloat(el.value); if(!isNaN(v)){P[PMAP[id]]=v; P.scenario="custom"; save(); renderAll(false);}});
+});
+function segWire(sel,fn){document.querySelectorAll(sel+" button").forEach(b=>{b.addEventListener("click",()=>{document.querySelectorAll(sel+" button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); fn(b);});});}
+segWire("#scenarioSeg",b=>{const sc=SCEN[b.getAttribute("data-sc")]; if(!sc) return; P.cat=sc.cat; P.dog=sc.dog; P.bcat=sc.bcat; P.bdog=sc.bdog; P.scenario=b.getAttribute("data-sc"); planOverride=null; save(); renderAll(true);});
+segWire("#fModule",b=>{const m=b.getAttribute("data-m"); F.module=m=="all"?"all":CHIP2MOD[m]; renderMaster();});
+$("fProduct").addEventListener("change",()=>{const v=$("fProduct").value; F.product=v=="all"?"all":SEL2PROD[v]; renderMaster();});
+$("fStatus").addEventListener("change",()=>{F.status=$("fStatus").value; renderMaster();});
+$("fSearch").addEventListener("input",()=>{F.search=$("fSearch").value; renderMaster();});
+segWire("#abcSeg",b=>{F.abc=b.getAttribute("data-a"); renderChartLabel();});
+segWire("#histSeg",b=>{F.hist=b.getAttribute("data-h"); renderChartHist();});
+const RYMAP={"每月固定":"M","季度批量":"Q","不定期":"I"};
+segWire("#rhythmSeg",b=>{const v=b.getAttribute("data-r"); F.rhythm=v=="all"?"all":RYMAP[v]; renderCust();});
+segWire("#planSeg",b=>{F.planMonths=parseInt(b.getAttribute("data-pm")); planOverride=null; renderPlan();});
+function planWire(){const cb=parseFloat($("planCatBatch").value)||0, db=parseFloat($("planDogBatch").value)||0; planOverride={cat:cb,dog:db}; renderPlan();}
+$("planCatBatch").addEventListener("change",planWire);
+$("planDogBatch").addEventListener("change",planWire);
+$("planAuto").addEventListener("click",()=>{planOverride=null; renderPlan();});
+$("btnReset").addEventListener("click",()=>{if(confirm("Reset all?")){localStorage.removeItem("bhsv2"); location.reload();}});
+$("btnCSV").addEventListener("click",()=>{
+ const rows=filteredRows(buildRows());
+ let csv="module,code,name,product,stock,unit,monthly,coverMo,level,action,status\n";
+ rows.forEach(r=>{csv+=[MODNAME[r.mod],r.code,"\""+r.name+"\"",PRODNAME[r.prod],r.stock==null?"":r.stock,r.unit,Math.round(r.monthly),r.cov==null?"":Math.round(r.cov*10)/10,Math.round(r.level),r.action==null?"":Math.round(r.action),STXT[r.st[0]]].join(",")+"\n";});
+ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"})); a.download="BHS_master.csv"; a.click();
+});
+/* ===== Inventory UI ===== */
+const TXT={IN:"進貨",ISSUE:"領料",RETURN:"退料",TRANSFER:"轉運",SHIP:"出貨",CONVERT:"貼標轉換",ADJUST:"盤點調整",SCRAP:"損耗"};
+const TXTEN={IN:"Inbound",ISSUE:"Issue",RETURN:"Return",TRANSFER:"Transfer",SHIP:"Ship out",CONVERT:"Label conv.",ADJUST:"Adjustment",SCRAP:"Scrap"};
+function txName(t){ return LANG=="zh"?(TXT[t]||t):(TXTEN[t]||t); }
+function locName(x){ if(x=="PROD") return L('產線','Production'); if(x=="EXT") return L('外部','External'); return x; }
+function renderWh(){
+ const tb=document.querySelector("#whTbl tbody"); if(!tb) return;
+ const bal=invBalances(); let h="";
+ ITEMREG.forEach(it=>{
+  const o=INV.opening[it.code]||{}; const b=bal[it.code];
+  const tot=b["13859"]+b["13863"]+b["960"];
+  h+="<tr><td>"+it.code+" "+esc(it.name)+"</td><td>"+it.unit+"</td>"
+   +WHS.map(w=>"<td class='num'><input class='openin' data-code='"+it.code+"' data-loc='"+w+"' type='number' step='any' value='"+(o[w]==null?"":o[w])+"'"+(cloudMode()&&!cloudAdmin()?" disabled":"")+"></td>").join("")
+   +WHS.map(w=>"<td class='num'>"+fmt(b[w])+"</td>").join("")
+   +"<td class='num'>"+fmt(b["PROD"])+"</td><td class='num'><b>"+fmt(tot)+"</b></td></tr>";
+ });
+ tb.innerHTML=h;
+ tb.querySelectorAll(".openin").forEach(inp=>{
+  inp.addEventListener("change",()=>{ const code=inp.getAttribute("data-code"), loc=inp.getAttribute("data-loc"), v=inp.value.trim();
+   if(cloudMode()){ if(!cloudAdmin()){ renderAll(false); return; }
+    sbSetOpening(code, loc, v===""?null:parseFloat(v)).then(()=>sbLoadAll()).catch(e=>{ alert(L('期初儲存失敗：','Opening save failed: ')+e.message); renderAll(false); });
+    return; }
+   if(!INV.opening[code]) INV.opening[code]={};
+   if(v==="") delete INV.opening[code][loc]; else INV.opening[code][loc]=parseFloat(v);
+   invSave(); renderAll(false); });
+ });
+}
+function renderLog(){
+ const tb=document.querySelector("#logTbl tbody"); if(!tb) return;
+ const ft=$("log_type").value, q=($("log_search").value||"").toLowerCase();
+ const list=INV.txns.slice().reverse().filter(t=>{
+  if(ft!="all"&&t.type!=ft) return false;
+  if(q){ const s=(t.code+" "+(ITEMMAP[t.code]?ITEMMAP[t.code].name:"")+" "+(t.lot||"")+" "+(t.ref||"")).toLowerCase(); if(s.indexOf(q)<0) return false; }
+  return true;
+ });
+ tb.innerHTML=list.length?list.map(t=>{
+  const nm=ITEMMAP[t.code]?ITEMMAP[t.code].name:t.code;
+  const nm2=t.code2?(ITEMMAP[t.code2]?ITEMMAP[t.code2].name:t.code2):"";
+  return "<tr class='"+(t.voided?"voided":"")+"'><td>"+t.id+"</td><td>"+t.ts.replace("T"," ").slice(0,16)+"</td><td>"+txName(t.type)+"</td>"
+   +"<td>"+t.code+" "+esc(nm)+(t.code2?" → "+t.code2+" "+esc(nm2):"")+"</td><td class='num'>"+fmt(t.qty)+"</td>"
+   +"<td>"+locName(t.from)+" → "+locName(t.to)+"</td><td>"+esc(t.lot||"")+"</td><td>"+esc(t.ref||"")+"</td><td>"+esc(t.op||"")+"</td><td>"+esc(t.note||"")+"</td>"
+   +"<td>"+(t.voided?L('已作廢','Voided'):"<button class='btn alt' data-void='"+t.id+"' style='padding:1px 8px;font-size:12px'>"+L('作廢','Void')+"</button>")+"</td></tr>";
+ }).join(""):"<tr><td colspan='11'>"+L('尚無流水紀錄','No transactions yet')+"</td></tr>";
+ tb.querySelectorAll("[data-void]").forEach(btn=>{
+  btn.addEventListener("click",()=>{ const id=parseInt(btn.getAttribute("data-void")); const t=INV.txns.find(x=>x.id==id); if(!t) return;
+   if(cloudMode()){ if(!cloudAdmin()){ alert(L('只有 admin 可以作廢','Only admin can void')); return; }
+    const reason=prompt(L('作廢原因（必填）：','Void reason (required):')); if(!reason) return;
+    sbVoid(id, reason).catch(e=>alert(e.message)); return; }
+   if(confirm(L('作廢這筆異動? 庫存將回溯調整','Void this transaction? Stock will be recalculated'))){ t.voided=true; invSave(); renderAll(false); } });
+ });
+}
+function locOptions(type){
+ const W=WHS.map(w=>[w,w]);
+ if(type=="IN") return {from:[["EXT",L('供應商/外部','Supplier / external')]], to:W};
+ if(type=="ISSUE") return {from:W, to:[["PROD",L('產線','Production line')]]};
+ if(type=="RETURN") return {from:[["PROD",L('產線','Production line')]], to:W};
+ if(type=="TRANSFER") return {from:W, to:W};
+ if(type=="SHIP") return {from:W, to:[["EXT",L('客戶/外部','Customer / external')]]};
+ if(type=="CONVERT") return {from:[["13859","13859"],["13863","13863"]], to:[["13859","13859"],["13863","13863"]]};
+ if(type=="ADJUST") return {from:[["ADJ","—"]], to:W};
+ if(type=="SCRAP") return {from:W.concat([["PROD",L('產線','Production line')]]), to:[["EXT",L('報廢','Scrap')]]};
+ return {from:W,to:W};
+}
+function fillLocs(){
+ const type=$("tx_type").value, o=locOptions(type);
+ $("tx_from").innerHTML=o.from.map(x=>"<option value='"+x[0]+"'>"+x[1]+"</option>").join("");
+ $("tx_to").innerHTML=o.to.map(x=>"<option value='"+x[0]+"'>"+x[1]+"</option>").join("");
+ $("tx_fg_wrap").style.display=type=="CONVERT"?"":"none";
+}
+function populateTxItems(){
+ const grps={RM:L('原料','Raw materials'),SF:L('半成品','Semi-finished'),LB:L('標籤','Labels'),PK:L('包材','Packaging'),FG:L('成品','Finished goods')};
+ $("tx_item").innerHTML=Object.keys(grps).map(g=>"<optgroup label='"+grps[g]+"'>"+ITEMREG.filter(it=>it.grp==g).map(it=>"<option value='"+it.code+"'>"+it.code+" "+esc(it.name)+"</option>").join("")+"</optgroup>").join("");
+ $("tx_fg").innerHTML=ITEMREG.filter(it=>it.grp=="FG").map(it=>"<option value='"+it.code+"'>"+it.code+" "+esc(it.name)+"</option>").join("");
+ fillLocs();
+}
+function txMsg(s,ok){ const m=$("tx_msg"); m.textContent=s; m.style.color=ok?"#3d9970":"#c0392b"; }
+function addTxn(){
+ const type=$("tx_type").value, code=$("tx_item").value, qty=parseFloat($("tx_qty").value);
+ const from=$("tx_from").value, to=$("tx_to").value;
+ if(isNaN(qty)||qty==0){ txMsg(L('請輸入數量','Enter a quantity'),false); return; }
+ if(type!="ADJUST"&&qty<0){ txMsg(L('數量需為正數 (盤點調整除外)','Quantity must be positive (except adjustment)'),false); return; }
+ if(type=="TRANSFER"&&from==to){ txMsg(L('轉運的來源與目的倉不能相同','Transfer source and destination must differ'),false); return; }
+ const bal=invBalances(); const b=bal[code]||{"13859":0,"13863":0,"960":0,"PROD":0};
+ const need={ISSUE:from,SHIP:from,TRANSFER:from,SCRAP:from,RETURN:"PROD",CONVERT:from}[type];
+ if(need){ const avail=need=="PROD"?b["PROD"]:b[need]; if(avail<qty){ txMsg(L('庫存不足: ','Insufficient stock: ')+code+" @ "+locName(need)+" = "+fmt(avail),false); return; } }
+ const m={type:type, code:code, code2:type=="CONVERT"?$("tx_fg").value:null, qty:qty,
+  from:type=="ADJUST"?"ADJ":from, to:type=="CONVERT"?from:to,
+  lot:$("tx_lot").value.trim(), ref:$("tx_ref").value.trim(), note:$("tx_note").value.trim()};
+ if(cloudMode()){
+  if(!cloudCanWrite()){ txMsg(L('唯讀角色不能登記異動','Viewer role cannot post movements'),false); return; }
+  txMsg(L('同步中…','Syncing...'),true);
+  sbPostMovement(m).then(r=>{ if(r&&r.queued){ txMsg(L('已排入待同步佇列（離線或連線不穩），連線後自動補傳','Queued for sync (offline) - will send when reconnected'),true); }
+    else txMsg(L('已同步到雲端 ','Synced to cloud ')+txName(type)+" "+code+" "+fmt(qty),true); $("tx_qty").value=""; })
+   .catch(e=>txMsg(L('伺服器拒絕：','Server rejected: ')+e.message,false));
+  return;
+ }
+ const now=new Date(); const tv=$("tx_time").value||now.toISOString().slice(0,16);
+ const t={id:INV.seq++, ts:tv, type:m.type, code:m.code, code2:m.code2, qty:m.qty, from:m.from, to:m.to, lot:m.lot, ref:m.ref, op:$("tx_op").value.trim(), note:m.note, voided:false};
+ INV.txns.push(t); invSave();
+ txMsg(L('已登記 #','Recorded #')+t.id+" "+txName(type)+" "+code+" "+fmt(qty),true);
+ $("tx_qty").value=""; renderAll(false);
+}
+$("tx_type").addEventListener("change",fillLocs);
+$("tx_add").addEventListener("click",addTxn);
+$("log_type").addEventListener("change",renderLog);
+$("log_search").addEventListener("input",renderLog);
+$("log_csv").addEventListener("click",()=>{
+ let csv="id,time,type,item,qty,from,to,lot,ref,operator,note,voided\n";
+ INV.txns.forEach(t=>{ csv+=[t.id,t.ts,t.type,t.code+(t.code2?"->"+t.code2:""),t.qty,t.from,t.to,"\""+(t.lot||"")+"\"","\""+(t.ref||"")+"\"","\""+(t.op||"")+"\"","\""+(t.note||"")+"\"",t.voided?1:0].join(",")+"\n"; });
+ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"})); a.download="BHS_inventory_log.csv"; a.click();
+});
+(function(){ const n=new Date(); const iso=new Date(n.getTime()-n.getTimezoneOffset()*60000).toISOString().slice(0,16); $("tx_time").value=iso; })();
+populateTxItems();
+/* ===== Collapsible sections + quick nav ===== */
+const SECDEF={params:0,dash:1,master:1,chart1:1,chart2:0,chart3:0,plan:0,inv:1,cust:0};
+let LAY={}; try{LAY=JSON.parse(localStorage.getItem("bhs-layout")||"{}");}catch(e){}
+function laySave(){ try{localStorage.setItem("bhs-layout",JSON.stringify(LAY));}catch(e){} }
+function secOpen(id){ return LAY[id]!=null?LAY[id]==1:SECDEF[id]==1; }
+function applySec(card){
+ const id=card.getAttribute("data-sec"); const body=card.querySelector(".card-body"); const btn=card.querySelector(".tgl");
+ const open=secOpen(id); if(body) body.style.display=open?"":"none"; if(btn) btn.textContent=open?"▾":"▸";
+}
+function setSec(id,v){ LAY[id]=v; laySave(); document.querySelectorAll("[data-sec]").forEach(c=>{ if(c.getAttribute("data-sec")==id) applySec(c); }); }
+function initSections(){
+ document.querySelectorAll("[data-sec]").forEach(card=>{
+  const h2=card.querySelector("h2"); if(!h2) return;
+  const head=document.createElement("div"); head.className="sect-head";
+  card.insertBefore(head,card.firstChild); head.appendChild(h2);
+  const btn=document.createElement("button"); btn.className="tgl"; btn.type="button"; btn.setAttribute("aria-label","toggle"); head.appendChild(btn);
+  const body=document.createElement("div"); body.className="card-body";
+  while(card.childNodes.length>1){ body.appendChild(card.childNodes[1]); }
+  card.appendChild(body);
+  btn.addEventListener("click",()=>{ const id=card.getAttribute("data-sec"); setSec(id, secOpen(id)?0:1); });
+  applySec(card);
+ });
+ document.querySelectorAll("#topnav [data-go]").forEach(b=>{
+  b.addEventListener("click",()=>{ const id=b.getAttribute("data-go"); setSec(id,1);
+   const card=document.querySelector("[data-sec='"+id+"']"); if(card) card.scrollIntoView({behavior:"smooth",block:"start"}); });
+ });
+ $("navAll").addEventListener("click",()=>{ document.querySelectorAll("[data-sec]").forEach(c=>{ LAY[c.getAttribute("data-sec")]=1; applySec(c); }); laySave(); });
+ $("navNone").addEventListener("click",()=>{ document.querySelectorAll("[data-sec]").forEach(c=>{ LAY[c.getAttribute("data-sec")]=0; applySec(c); }); laySave(); });
+ $("navDef").addEventListener("click",()=>{ LAY={}; laySave(); document.querySelectorAll("[data-sec]").forEach(applySec); });
+}
+initSections();
+const PAIRS=[
+["BHS 模塊化管理系統 v6 — 雲端同步・進銷存・雙語・儀表板版","BHS Modular System v6 - Cloud Sync, Inventory, Bilingual Dashboard"],
+["⚙️ 參數面板（模塊參數化）","⚙️ Parameters"],
+["需求情境（點選即套用）","Demand scenario - tap to apply"],
+["2025 實際","2025 Actual"],["Proj 預測基線","Proj Baseline"],["2026 年化","2026 Annualized"],["成長 +15%","Growth +15%"],
+["Cat 300mg 月需求（瓶）","Cat 300mg demand / mo (btl)"],["Dog 1000mg 月需求（瓶）","Dog 1000mg demand / mo (btl)"],
+["泰國 Blister Cat 月需求（盒）","Thai Blister Cat / mo (box)"],["泰國 Blister Dog 月需求（盒）","Thai Blister Dog / mo (box)"],
+["供應與水位參數","Supply and level parameters"],
+["原料客供週期（月）— BHS 年進口 1–2 次","RM consignment cycle (mo) - BHS imports 1-2x/yr"],
+["原料安全覆蓋（月）","RM safety cover (mo)"],
+["未貼標緩衝目標（月）","Unlabeled buffer target (mo)"],
+["輔料水位（前置+安全，月）","Aux level - lead+safety (mo)"],
+["本地包材水位（月）— 蓋/盒/外箱，前置 1–2 週","Local packaging level (mo) - lead 1-2 wk"],
+["包材採購參數","Packaging purchasing"],
+["150cc 瓶 — 單次採購覆蓋（月，中國直採）","150cc bottles - cover per order (mo, China)"],
+["40 呎櫃容量（瓶）","40ft container capacity (btl)"],
+["成品外箱（瓶/箱）","Finished case (btl/case)"],
+["未貼標外箱（瓶/箱）","Unlabeled case (btl/case)"],
+["↺ 重置參數","↺ Reset"],["⬇ 匯出總表 CSV","⬇ Export CSV"],["🖨 列印","🖨 Print"],
+["登入雲端後，參數與庫存以伺服器為準並即時同步；未登入時為本機模式（localStorage）。","When signed in, parameters and stocks sync to the cloud in real time (server is source of truth); signed out = local mode (localStorage)."],
+["🎛️ 儀表板（即時連動）","🎛️ Dashboard - Live"],
+["品項狀態分佈（全模塊 40 項）","Item status distribution - 40 items"],
+["🔴 警報清單（覆蓋低於警戒）","🔴 Alerts - below critical"],
+["出貨目的地占比（全期真出貨）","Shipment destinations - all-time"],
+["📋 管理總表（全模塊連動）","📋 Master Table - All Modules Linked"],
+["全部模塊","All modules"],["原料","Raw Mat."],["半成品","Semi-fin."],["標籤","Labels"],["包材","Packaging"],
+["產品：全部","Product: All"],["共用","Shared"],["泰國線","Thailand line"],
+["狀態：全部","Status: All"],["🔴 低於警戒","🔴 Below critical"],["🟡 低於水位","🟡 Below level"],["🟢 正常","🟢 OK"],["⚪ 待盤點","⚪ No count"],
+["模塊","Module"],["編碼","Code"],["品項","Item"],["產品","Product"],["庫存（可改）","Stock (editable)"],["單位","Unit"],["月用量","Monthly use"],["覆蓋（月）","Cover (mo)"],["水位","Level"],["應補 / 應通知","Order / Notify"],["狀態","Status"],
+["狀態規則：🔴 覆蓋 < 警戒月數（原料=供應週期、半成品=0.5 月、包材=0.5 月）｜🟡 覆蓋 < 水位｜🟢 達水位｜⚪ 尚無庫存數（在進銷存模塊設定期初或登記異動後即啟用判讀；庫存欄的數字來自進銷存即時計算）。標籤水位依 ABC：A 級 2 月 / B 級 3 月 / C 級 6 月。","Status rules: red = cover < critical months (RM = supply cycle, semi-fin. = 0.5 mo, packaging = 0.5 mo) | yellow = cover < level | green = at level | grey = no stock count yet - set an opening balance or record a movement in the Inventory module to activate (stock column is computed live from the inventory ledger). Label levels by ABC: A = 2 mo / B = 3 mo / C = 6 mo."],
+["📊 圖表 1 — 原料覆蓋月數（vs 通知水位）","📊 Chart 1 - RM Cover Months (vs notify level)"],
+["紅線 = 通知水位（供應週期+安全）；料的覆蓋全低於水位時，優先處理最短的那支（目前是 Glutamine）。","Red line = notify level (cycle + safety). When all covers sit below level, fix the shortest one first (currently Glutamine)."],
+["📊 圖表 2 — 年度生產 vs 出貨","📊 Chart 2 - Yearly Production vs Shipments"],
+["生產＋出貨","Prod + Ship"],["只看生產","Production only"],["只看出貨","Shipments only"],
+["2022–2024 連續三年出貨 > 生產，差額由未貼標庫存吸收 — 緩衝就是這樣被吃光的。2026 為至 10/21 實際。","2022-2024: shipments exceeded production three years running; the gap came out of unlabeled stock - that is how the buffer drained. 2026 = actuals to Oct 21."],
+["📊 圖表 3 — 標籤年用量（ABC 分級）","📊 Chart 3 - Label Yearly Use (ABC)"],
+["全部","All"],["A 級","Class A"],["B 級","Class B"],["C 級","Class C"],
+["A 級（≥10,000/年）5 種佔 88%；C 級（<1,000/年）6 種合計僅 1,500 張 — 建議 C 級改數位現印，不壓庫存。","Class A (>=10,000/yr): 5 SKUs = 88%. Class C (<1,000/yr): 6 SKUs total only 1,500 pcs - print C digitally on demand instead of stocking."],
+["🏭 生產計畫連動（以批為單位）","🏭 Production Plan - By Batch"],
+["計畫期間","Plan period"],["3 個月","3 mo"],["6 個月","6 mo"],["12 個月","12 mo"],
+["Cat 批數（1 批=16,000 瓶）","Cat batches (1 = 16,000 btl)"],["Dog 批數（1 批=7,780 瓶）","Dog batches (1 = 7,780 btl)"],
+["↺ 依需求自動排批","↺ Auto-schedule by demand"],
+["物料","Material"],["計畫需求 (kg)","Planned need (kg)"],["目前庫存 (kg)","Stock (kg)"],["缺口 (kg)","Gap (kg)"],["判讀","Verdict"],
+["包材連動（計畫期間總瓶數）：","Packaging for plan (total bottles): "],
+["👥 客戶節奏（預測基線，可篩選）","👥 Customer Rhythm (baseline, filterable)"],
+["全部客戶","All customers"],["每月固定（基載）","Monthly fixed (base)"],["季度批量（尖峰）","Quarterly bulk (peaks)"],["不定期 / 長尾","Irregular / long tail"],
+["客戶","Customer"],["節奏","Rhythm"],["Cat 年量","Cat / yr"],["Dog 年量","Dog / yr"],["相對量","Relative volume"],
+["來源：原檔 Cat Proj / Dog Proj。注意：2025 實際出貨已超過此基線總量（351,952），請以參數面板的需求情境為準，客戶表用來看「節奏型態」。","Source: Cat Proj / Dog Proj in the original file. Note: 2025 actual shipments already exceed this baseline total (351,952) - use the parameter-panel scenarios for volumes; this table shows rhythm patterns."]
+];
+PAIRS.push(["BioHealth Solutions（AminAvast / RenAvast）｜改任一參數或庫存 → 管理總表、圖表、生產計畫全部連動重算｜數據基準：歷史分析 v1.2 + MMR 配方（Cat BHS-01US / Dog BHS-02US）｜庫存初始值為 2024-01-10 盤點快照，已載入進銷存模塊期初；之後用異動登記維護，總表/儀表板即時連動","BioHealth Solutions (AminAvast / RenAvast) | Change any parameter or stock and the master table, charts and production plan recalculate together | Basis: history analysis v1.2 + MMR formulas (Cat BHS-01US / Dog BHS-02US) | Stocks start from the 2024-01-10 count snapshot, loaded as opening balances in the Inventory module; maintain them with movement entries - master table and dashboard update live."]);
+PAIRS.push(["BHS 模塊化管理系統 v6（雲端同步版）｜與 v1.2 Excel 工作簿為同一套參數與口徑；Excel 版保留為正式記錄，本頁為日常操作版。數據：Dr._Mark_product_inventory.xlsx 全量分析 + MMR 主檔照片（2026-10-22）。","BHS Modular Management System v6 (Cloud Sync) | Same parameters and definitions as the v1.2 Excel workbook; Excel stays the record of authority, this page is the daily operations view. Data: full analysis of Dr._Mark_product_inventory.xlsx + MMR photos (2026-10-22)."]);
+PAIRS.push(
+["📦 進銷存與倉庫管理（異動 Log）","📦 Inventory and Warehouse (Movement Log)"],
+["新增異動","New movement"],
+["異動類型","Movement type"],["品項","Item"],["轉換成品（貼標後）","Finished good (after labeling)"],["數量","Quantity"],["來源位置","From"],["目的位置","To"],["批號 Lot","Lot"],["單號 / PO / 批次單","Ref / PO / Batch"],["經手人","Operator"],["日期時間","Date & time"],["備註","Note"],
+["進貨（入庫）","Inbound"],["領料（到產線）","Issue to production"],["退料（產線退回）","Return from production"],["倉庫轉運","Warehouse transfer"],["出貨","Ship out"],["貼標轉換（半成品→成品）","Label conversion (semi to finished)"],["盤點調整（可正負）","Adjustment (+/-)"],["損耗 / 報廢","Scrap"],
+["＋ 登記異動","+ Record movement"],
+["各倉即時庫存（期初可改）","Live stock by warehouse (editable opening)"],
+["異動 Log（流水帳）","Movement Log"],
+["類型：全部","Type: All"],["進貨","Inbound"],["領料","Issue"],["退料","Return"],["轉運","Transfer"],["貼標轉換","Label conv."],["盤點調整","Adjustment"],["損耗","Scrap"],
+["⬇ 匯出 Log CSV","⬇ Export Log CSV"],
+["時間","Time"],["類型","Type"],["批號","Lot"],["單號","Ref"],["經手","Operator"],
+["期初 13859","Opening 13859"],["期初 13863","Opening 13863"],["期初 960","Opening 960"],["產線在製","At production"],["合計","Total"],["單位","Unit"]
+);
+PAIRS.push(
+["所有流動都在這裡登記：進貨、領料、退料、倉庫轉運、出貨、貼標轉換、盤點調整、損耗。每筆自動寫入 Log，庫存 = 期初 + 全部流水，即時庫存會回灌管理總表、儀表板與生產計畫。倉庫：13859 生產/原料倉、13863 包裝/包材倉、960 暫存倉；「產線」為虛擬位置（領料後、退料前的在製量）。","Register every movement here: inbound, issue, return, transfer, shipment, label conversion, adjustment, scrap. Each entry is written to the Log; stock = opening + all movements, and live stock feeds the master table, dashboard and production plan. Warehouses: 13859 production/RM, 13863 packaging, 960 storage; 'Production' is a virtual location (issued, not yet returned)."],
+["即時庫存 = 期初 + 流水淨額。期初欄位直接改數字即生效（改期初不會寫入 Log；日常流動請一律用上方異動登記，Log 才完整）。成品 FG 為貼標轉換的入帳品項。","Live stock = opening + net movements. Edit opening numbers directly (opening edits do not write to the Log; use movement entries for daily flows so the Log stays complete). FG items are where label conversions are booked."]
+);
+PAIRS.push(
+["🎛️ 儀表板","🎛️ Dashboard"],["📋 總表","📋 Master"],["📦 進銷存","📦 Inventory"],["🏭 生產計畫","🏭 Plan"],["📊 圖表","📊 Charts"],["👥 客戶","👥 Customers"],["⚙️ 參數","⚙️ Params"],
+["全部展開","Expand all"],["全部摺疊","Collapse all"],["建議預設","Recommended"]
+);
+function applyStaticLang(){
+ const target=LANG=="zh"?0:1;
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+  if(!n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+  const p=n.parentElement; if(!p||p.tagName=="SCRIPT"||p.tagName=="STYLE") return NodeFilter.FILTER_REJECT;
+  return NodeFilter.FILTER_ACCEPT;}});
+ const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+ nodes.forEach(function(n){
+  const t=n.nodeValue, core=t.trim();
+  for(let i=0;i<PAIRS.length;i++){ if(core==PAIRS[i][0]||core==PAIRS[i][1]){ n.nodeValue=t.replace(core,PAIRS[i][target]); break; } }
+ });
+ const si=$("fSearch"); if(si) si.placeholder=L('搜尋品項 / 編碼','Search items / code');
+ const lg=$("log_search"); if(lg) lg.placeholder=L('搜尋品項 / 批號 / 單號','Search item / lot / ref');
+ document.title=L('BHS 模塊化管理系統 v6 — 雲端同步・進銷存・雙語版','BHS Modular System v6 - Cloud Sync, Inventory, Bilingual');
+}
+function syncLangChrome(){
+ MODNAME=LANG=="zh"?MODNAME_ZH:MODNAME_EN; PRODNAME=LANG=="zh"?PRODNAME_ZH:PRODNAME_EN; STXT=LANG=="zh"?STXT_ZH:STXT_EN;
+ document.querySelectorAll("#langSeg button").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-lang")==LANG);});
+}
+function setLang(l){ LANG=l; try{localStorage.setItem("bhs-lang",l);}catch(e){} syncLangChrome(); applyStaticLang(); populateTxItems(); renderAll(true); }
+document.querySelectorAll("#langSeg button").forEach(function(b){ b.addEventListener("click",function(){ setLang(b.getAttribute("data-lang")); }); });
+/* ===== Cloud integration (Supabase) ===== */
+PAIRS.push(
+["🔐 登入（雲端同步）","🔐 Sign In (Cloud Sync)"],["登入","Sign in"],["忘記密碼 / 首次設定密碼","Forgot password / First-time setup"],
+["未登入時顯示本機快取／快照（唯讀參考）；登入後自動載入雲端帳本並即時同步。","Signed out: showing local cache / snapshot (reference only). Sign in to load the cloud ledger with live sync."],
+["🔑 設定新密碼","🔑 Set New Password"],["儲存新密碼","Save new password"],
+["你正透過邀請／重設連結進入，請先設定密碼，之後用 Email＋密碼登入。","You arrived via an invite / recovery link. Set a password first, then sign in with email + password."],
+["☁️ 雲端帳本","☁️ Cloud Ledger"],["登出","Sign out"],["立即同步","Sync now"]
+);
+function cloudMode(){ return !!(window.SB&&SB.session&&SB.profile); }
+function cloudAdmin(){ return cloudMode()&&SB.profile.role==="admin"; }
+function cloudCanWrite(){ return cloudMode()&&SB.profile.role!=="viewer"; }
+function invCache(){ try{ localStorage.setItem("bhs-cache-v6", JSON.stringify(INV)); }catch(e){} }
+let _prmT=null;
+function scheduleCloudParams(){ if(!cloudAdmin()) return; clearTimeout(_prmT); _prmT=setTimeout(()=>{ sbSaveParams(JSON.parse(JSON.stringify(P))).catch(()=>{}); },800); }
+sbOn("data",function(d){
+ if(d.opening){ INV.opening=d.opening; INV.txns=d.txns; INV.seq=d.seq;
+  if(d.params){ P=Object.assign({},DEFP,d.params); try{localStorage.setItem("bhsv2",JSON.stringify({P:P,stocks:stocks}));}catch(e){} }
+  invCache(); renderAll(true);
+ } else if(d.txnsOnly){ INV.txns=d.txnsOnly; INV.seq=d.seq; invCache(); renderAll(false); }
+ updateAuthUI();
+});
+sbOn("auth",function(){ updateAuthUI(); syncChip(); });
+sbOn("sync",function(){ syncChip(); renderQueueBox(); });
+function syncChip(){ const c=$("syncChip"); if(!c) return; let t;
+ if(!SB.session) t=L('☁ 未登入（本機模式）','☁ Signed out (local)');
+ else if(!navigator.onLine) t=L('🔴 離線 — 異動將排隊','🔴 Offline - queueing');
+ else { const q=sbQueue().length; t=q?L('⏳ 待同步 ','⏳ Pending ')+q:L('🟢 已同步','🟢 Synced'); }
+ c.textContent=t;
+}
+function renderQueueBox(){ const b=$("queueBox"); if(!b) return; const q=sbQueue(), cf=sbConflicts();
+ let h="";
+ if(q.length) h+="<div class='small'>⏳ "+L('待同步異動 ','Pending movements ')+"<b>"+q.length+"</b>"+L(' 筆（連線/登入後自動補傳）',' (auto-send when back online)')+"</div>";
+ if(cf.length){ h+="<div class='small' style='color:#c0392b'>⚠ "+L('被伺服器拒絕的異動 ','Server-rejected movements ')+"<b>"+cf.length+"</b>"+L(' 筆：',' : ')+cf.map(x=>esc(x.args.p_item_code)+" "+x.args.p_qty+" ("+esc(String(x.err).slice(0,60))+")").join("; ")+" <button id='cfClear' class='btn alt' style='padding:1px 8px;font-size:12px'>"+L('清除清單','Clear list')+"</button></div>"; }
+ b.innerHTML=h;
+ const cc=$("cfClear"); if(cc) cc.addEventListener("click",()=>{ sbConflictsSet([]); renderQueueBox(); });
+}
+function updateAuthUI(){ const inS=!!SB.session;
+ const ao=$("authOut"), ai=$("authIn"); if(!ao||!ai) return;
+ ao.style.display=inS?"none":""; ai.style.display=inS?"":"none";
+ if(inS&&SB.profile){ $("authInfo").innerHTML=L('已登入 ','Signed in ')+"<b>"+esc(SB.profile.email)+"</b> · "+L('角色 ','Role ')+"<b>"+SB.profile.role+"</b> · BHS · "+L('雲端帳本（伺服器為準）','Cloud ledger (server is source of truth)');
+  const op=$("tx_op"); if(op&&!op.value) op.value=SB.profile.email;
+ } else if(inS){ $("authInfo").textContent=L('已登入，載入中…','Signed in, loading...'); }
+ const dis=cloudMode()&&!cloudCanWrite();
+ ["tx_type","tx_item","tx_fg","tx_qty","tx_from","tx_to","tx_lot","tx_ref","tx_note","tx_add"].forEach(id=>{ const el=$(id); if(el) el.disabled=dis; });
+ syncChip(); renderQueueBox();
+}
+$("liBtn").addEventListener("click",async()=>{ const em=$("liEmail").value.trim(), pw=$("liPw").value;
+ if(!em||!pw){ $("liMsg").textContent=L('請輸入 Email 與密碼','Enter email and password'); return; }
+ $("liMsg").textContent=L('登入中…','Signing in...');
+ try{ await sbSignIn(em,pw); $("liMsg").textContent=""; }catch(e){ $("liMsg").textContent=L('登入失敗：','Sign-in failed: ')+e.message; } });
+$("liPw").addEventListener("keydown",e=>{ if(e.key==="Enter") $("liBtn").click(); });
+$("liForgot").addEventListener("click",async()=>{ const em=$("liEmail").value.trim();
+ if(!em){ $("liMsg").textContent=L('請先輸入 Email','Enter your email first'); return; }
+ try{ await sbRecover(em, location.href.split("#")[0]); $("liMsg").textContent=L('密碼重設信已寄出，請點信中連結回來設定新密碼。','Recovery email sent - follow the link to set a new password.'); }
+ catch(e){ $("liMsg").textContent=e.message; } });
+$("loBtn").addEventListener("click",()=>{ sbSignOut(); updateAuthUI(); });
+$("syncBtn").addEventListener("click",async()=>{ try{ await sbFlushQueue(); await sbReloadTxns(); }catch(e){} syncChip(); });
+$("pwBtn").addEventListener("click",async()=>{ const v=$("pwNew").value; if(v.length<6){ alert(L('密碼至少 6 字元','Password needs 6+ characters')); return; }
+ try{ await sbSetPassword(v); $("pwSet").style.display="none"; alert(L('密碼已設定，之後用 Email＋密碼登入。','Password set. Sign in with email + password from now on.')); if(SB.session){ try{ await sbLoadAll(); }catch(e){} } }
+ catch(e){ alert(e.message); } });
+(async function bootCloud(){
+ const t=await sbCaptureHash();
+ if(t==="invite"||t==="recovery"){ const ps=$("pwSet"); if(ps) ps.style.display=""; const ao=$("authOut"); if(ao) ao.style.display="none"; }
+ if(SB.session){ try{ await sbLoadAll(); sbFlushQueue(); }catch(e){ const m=$("liMsg"); if(m) m.textContent=L('雲端載入失敗：','Cloud load failed: ')+e.message; } }
+ updateAuthUI(); syncChip(); renderQueueBox();
+})();
+if(LANG!="zh"){ syncLangChrome(); applyStaticLang(); }
+renderAll(true);
+updateAuthUI();
+</script>
+</body></html>
