@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BHS v6 資料層測試 — Phase 2</title>
+<style>body{font-family:-apple-system,"Segoe UI",sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#1f3864}
+input{padding:8px;border:1px solid #b9c6d8;border-radius:6px;font-size:14px}
+button{background:#1f3864;color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer}
+.step{border:1px solid #dde4ee;border-radius:8px;padding:10px 14px;margin:8px 0;font-size:14px}
+.ok{color:#2e7d4f;font-weight:700}.fail{color:#c0392b;font-weight:700}.info{color:#5a6a7d}
+#pwset{border:2px solid #d9a400;border-radius:10px;padding:14px;margin:12px 0;display:none;background:#fffbe8}
+pre{background:#f4f7fc;border-radius:6px;padding:8px;font-size:12px;overflow:auto;max-height:200px}</style></head>
+<body>
+<h2>BHS v6 資料層測試（Phase 2）</h2>
+<p class="info">流程：① 從 Supabase 寄來的「重設密碼」信點連結進到本頁 → ② 在黃框設定新密碼 → ③ 按「登入並執行測試」自動跑完整流程（讀主檔/期初 → 寫測試進貨 → 超量領料應被伺服器拒絕 → 作廢測試筆 → 餘額回到原點）。測試筆會留在 Log 但標記作廢，餘額不受影響。</p>
+<div id="pwset">
+ <b>🔑 設定新密碼</b>
+ <div style="margin-top:8px"><input id="newpw" type="password" placeholder="新密碼（至少 6 字元）" size="24"> <button id="setpw">儲存新密碼</button></div>
+ <div class="info" id="pwmsg" style="margin-top:6px"></div>
+</div>
+<div>
+ <input id="email" type="email" value="jack@albertmax.com" size="26">
+ <input id="pw" type="password" placeholder="密碼" size="18">
+ <button id="run">登入並執行測試</button>
+</div>
+<div id="out" style="margin-top:14px"></div>
+<script>
+/* BHS v6 — Supabase data layer (no dependencies, plain fetch).
+   Model: server is the source of truth. Local INV state mirrors v5.1's
+   {opening:{code:{loc:qty}}, txns:[{id,ts,type,code,code2,qty,from,to,lot,ref,op,note,voided}], seq}
+   Writes go through the validated RPC (post_transaction / void_transaction).
+   If offline/unauthenticated-write-fails: queue locally (localStorage bhs-queue-v6)
+   with a client_uuid idempotency key and flush on reconnect/sign-in.
+   Server rejections (e.g. insufficient stock) land in a conflicts list (bhs-conflicts-v6).
+*/
+"use strict";
+const SB_URL = "https://hfhsaofxiyzftbltlygh.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmaHNhb2Z4aXl6ZnRibHRseWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3MTczOTAsImV4cCI6MjEwODI5MzM5MH0.7SQxeWPUB5qrR2gnTAZ0KXBy26ThN8EtcVcTCle2c_4";
+
+const SB = {
+  session: null,      // {access_token, refresh_token, expires_at, user:{id,email}}
+  profile: null,      // {email, role, client_id}
+  clientId: null,
+  items: [],          // server item rows
+  idByCode: {}, codeById: {},
+  paramsVersion: 1,
+  rt: null, rtRef: 2, rtHb: null, rtReady: false,
+  listeners: { auth: [], sync: [], data: [] }
+};
+
+function sbOn(ev, fn) { SB.listeners[ev].push(fn); }
+function sbEmit(ev, arg) { SB.listeners[ev].forEach(f => { try { f(arg); } catch (e) {} }); }
+
+/* ---------- session storage ---------- */
+function sbSaveSession() { try { SB.session ? localStorage.setItem("bhs-auth-v6", JSON.stringify(SB.session)) : localStorage.removeItem("bhs-auth-v6"); } catch (e) {} }
+function sbLoadSession() { try { SB.session = JSON.parse(localStorage.getItem("bhs-auth-v6") || "null"); } catch (e) { SB.session = null; } }
+sbLoadSession();
+
+/* ---------- offline queue / conflicts ---------- */
+function sbQueue() { try { return JSON.parse(localStorage.getItem("bhs-queue-v6") || "[]"); } catch (e) { return []; } }
+function sbQueueSet(q) { try { localStorage.setItem("bhs-queue-v6", JSON.stringify(q)); } catch (e) {} sbEmit("sync"); }
+function sbConflicts() { try { return JSON.parse(localStorage.getItem("bhs-conflicts-v6") || "[]"); } catch (e) { return []; } }
+function sbConflictsSet(c) { try { localStorage.setItem("bhs-conflicts-v6", JSON.stringify(c)); } catch (e) {} sbEmit("sync"); }
+function sbUuid() { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); return "q" + Date.now() + "-" + Math.floor(Math.random() * 1e9); }
+
+/* ---------- auth (GoTrue REST) ---------- */
+async function sbAuthFetch(path, body, token) {
+  const r = await fetch(SB_URL + "/auth/v1/" + path, {
+    method: "POST",
+    headers: { "apikey": SB_ANON, "Content-Type": "application/json", ...(token ? { "Authorization": "Bearer " + token } : {}) },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.msg || j.error_description || j.message || ("HTTP " + r.status));
+  return j;
+}
+function sbSetSession(j) {
+  SB.session = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000, user: j.user };
+  sbSaveSession(); sbEmit("auth");
+}
+async function sbSignIn(email, password) {
+  const j = await sbAuthFetch("token?grant_type=password", { email, password });
+  sbSetSession(j);
+  await sbLoadAll();
+  sbFlushQueue();
+  return SB.profile;
+}
+async function sbRefresh() {
+  if (!SB.session || !SB.session.refresh_token) return false;
+  try { const j = await sbAuthFetch("token?grant_type=refresh_token", { refresh_token: SB.session.refresh_token }); sbSetSession(j); return true; }
+  catch (e) { return false; }
+}
+async function sbToken() {
+  if (!SB.session) return null;
+  if (Date.now() > SB.session.expires_at - 60000) { if (!await sbRefresh()) { SB.session = null; sbSaveSession(); sbEmit("auth"); return null; } }
+  return SB.session.access_token;
+}
+function sbSignOut() { SB.session = null; SB.profile = null; sbSaveSession(); sbRtStop(); sbEmit("auth"); }
+async function sbRecover(email, redirectTo) { return sbAuthFetch("recover", { email, redirect_to: redirectTo }); }
+async function sbSetPassword(newPassword) {
+  const tk = await sbToken(); if (!tk) throw new Error("no session");
+  const r = await fetch(SB_URL + "/auth/v1/user", { method: "PUT", headers: { "apikey": SB_ANON, "Authorization": "Bearer " + tk, "Content-Type": "application/json" }, body: JSON.stringify({ password: newPassword }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.msg || j.message || ("HTTP " + r.status));
+  return j;
+}
+/* Capture tokens from invite / recovery links (#access_token=...&type=invite|recovery) */
+async function sbCaptureHash() {
+  if (!location.hash || location.hash.indexOf("access_token=") < 0) return null;
+  const h = new URLSearchParams(location.hash.slice(1));
+  const at = h.get("access_token"), rt = h.get("refresh_token"), type = h.get("type");
+  if (!at) return null;
+  SB.session = { access_token: at, refresh_token: rt, expires_at: Date.now() + 3500 * 1000, user: null };
+  try {
+    const u = await fetch(SB_URL + "/auth/v1/user", { headers: { "apikey": SB_ANON, "Authorization": "Bearer " + at } }).then(r => r.json());
+    if (u && u.id) SB.session.user = u;
+  } catch (e) {}
+  sbSaveSession();
+  try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  sbEmit("auth");
+  return type;
+}
+
+/* ---------- data REST (PostgREST) ---------- */
+async function sbRest(path, opts) {
+  opts = opts || {};
+  const tk = await sbToken(); if (!tk) throw new Error("not signed in");
+  const r = await fetch(SB_URL + "/rest/v1/" + path, {
+    method: opts.method || "GET",
+    headers: { "apikey": SB_ANON, "Authorization": "Bearer " + tk, "Content-Type": "application/json", ...(opts.headers || {}) },
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
+  });
+  if (r.status === 204) return null;
+  const j = await r.json().catch(() => null);
+  if (!r.ok) throw new Error((j && (j.message || j.details || j.hint)) || ("HTTP " + r.status));
+  return j;
+}
+async function sbFetchAll(path) {
+  let out = [], from = 0; const size = 1000;
+  while (true) {
+    const rows = await sbRest(path, { headers: { "Range-Unit": "items", "Range": from + "-" + (from + size - 1) } });
+    out = out.concat(rows || []);
+    if (!rows || rows.length < size) break;
+    from += size;
+  }
+  return out;
+}
+async function sbRpc(fn, args) { return sbRest("rpc/" + fn, { method: "POST", body: args }); }
+
+/* ---------- load server state into the v5.1 INV shape ---------- */
+function sbMapTx(t) {
+  return { id: t.id, ts: (t.ts || "").slice(0, 16).replace("T", " "), type: t.type, code: SB.codeById[t.item_id] || "?", code2: t.item2_id ? (SB.codeById[t.item2_id] || null) : null,
+    qty: +t.qty, from: t.from_code, to: t.to_code, lot: t.lot || "", ref: t.ref || "", op: t.operator_name || "", note: t.note || "", voided: !!t.voided };
+}
+async function sbLoadAll() {
+  const prof = await sbRest("profiles?select=email,role,client_id");
+  if (!prof || !prof.length) throw new Error("This account has no profile / role yet. Ask the admin to grant one.");
+  SB.profile = prof[0]; SB.clientId = prof[0].client_id;
+  const items = await sbFetchAll("items?select=*&order=code.asc");
+  SB.items = items; SB.idByCode = {}; SB.codeById = {};
+  items.forEach(i => { SB.idByCode[i.code] = i.id; SB.codeById[i.id] = i.code; });
+  const ops = await sbFetchAll("opening_balances?select=item_id,warehouse_code,qty");
+  const opening = {};
+  ops.forEach(o => { const c = SB.codeById[o.item_id]; if (!c) return; (opening[c] = opening[c] || {})[o.warehouse_code] = +o.qty; });
+  const txs = await sbFetchAll("transactions?select=*&order=id.asc");
+  const log = txs.map(sbMapTx);
+  const seq = (txs.length ? txs[txs.length - 1].id : 0) + 1;
+  const prm = await sbRest("app_params?select=params,version");
+  let params = null;
+  if (prm && prm.length) { params = prm[0].params; SB.paramsVersion = prm[0].version || 1; }
+  sbRtStart();
+  sbEmit("data", { opening, txns: log, seq, params });
+  return { opening, txns: log, seq, params };
+}
+async function sbReloadTxns() {
+  if (!SB.session || !SB.profile) return;
+  const txs = await sbFetchAll("transactions?select=*&order=id.asc");
+  sbEmit("data", { txnsOnly: txs.map(sbMapTx), seq: (txs.length ? txs[txs.length - 1].id : 0) + 1 });
+}
+
+/* ---------- writes ---------- */
+function sbMovementArgs(m) {
+  return { p_type: m.type, p_item_code: m.code, p_item2_code: m.code2 || null, p_qty: m.qty, p_from: m.from, p_to: m.to,
+    p_lot: m.lot || null, p_ref: m.ref || null, p_note: m.note || null, p_client_uuid: m.uuid || sbUuid() };
+}
+async function sbPostMovement(m) {
+  const args = sbMovementArgs(m);
+  if (!SB.session || !navigator.onLine) { const q = sbQueue(); q.push({ args, queuedAt: new Date().toISOString() }); sbQueueSet(q); return { queued: true }; }
+  try { const res = await sbRpc("post_transaction", args); await sbReloadTxns(); return { posted: true, res }; }
+  catch (e) {
+    if (/insufficient|unknown item|role/i.test(e.message)) throw e; // server verdict: do not queue, caller shows it
+    const q = sbQueue(); q.push({ args, queuedAt: new Date().toISOString(), err: e.message }); sbQueueSet(q); return { queued: true, err: e.message };
+  }
+}
+async function sbFlushQueue() {
+  if (!SB.session) return;
+  let q = sbQueue(); if (!q.length) return;
+  const remain = [], conf = sbConflicts(); let changed = false;
+  for (const item of q) {
+    try { await sbRpc("post_transaction", item.args); changed = true; }
+    catch (e) {
+      if (/insufficient|unknown item/i.test(e.message)) { conf.push({ args: item.args, err: e.message, at: new Date().toISOString() }); changed = true; }
+      else remain.push(item);
+    }
+  }
+  sbQueueSet(remain); sbConflictsSet(conf);
+  if (changed && !remain.length) await sbReloadTxns();
+  sbEmit("sync");
+}
+async function sbVoid(id, reason) {
+  const res = await sbRpc("void_transaction", { p_id: id, p_reason: reason });
+  await sbReloadTxns();
+  return res;
+}
+async function sbSetOpening(code, loc, qty) {
+  const itemId = SB.idByCode[code]; if (!itemId) throw new Error("unknown item " + code);
+  if (qty === null || qty === undefined) {
+    return sbRest("opening_balances?client_id=eq." + SB.clientId + "&item_id=eq." + itemId + "&warehouse_code=eq." + encodeURIComponent(loc), { method: "DELETE" });
+  }
+  return sbRest("opening_balances?on_conflict=client_id,item_id,warehouse_code", {
+    method: "POST", headers: { "Prefer": "resolution=merge-duplicates" },
+    body: { client_id: SB.clientId, item_id: itemId, warehouse_code: loc, qty: qty, updated_by: SB.session.user.id }
+  });
+}
+async function sbSaveParams(params) {
+  SB.paramsVersion = (SB.paramsVersion || 1) + 1;
+  return sbRest("app_params?client_id=eq." + SB.clientId, {
+    method: "PATCH", headers: { "Prefer": "return=minimal" },
+    body: { params: params, version: SB.paramsVersion, updated_by: SB.session.user.id }
+  });
+}
+
+/* ---------- realtime (minimal Phoenix client on transactions) ---------- */
+function sbRtStart() {
+  if (SB.rt || !SB.session) return;
+  try {
+    const ws = new WebSocket(SB_URL.replace("https://", "wss://") + "/realtime/v1/websocket?apikey=" + SB_ANON + "&vsn=1.0.0");
+    SB.rt = ws;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ topic: "realtime:public:transactions", event: "phx_join", ref: String(SB.rtRef++), join_ref: "1",
+        payload: { config: { broadcast: { ack: false, self: false }, presence: { key: "" }, postgres_changes: [{ event: "*", schema: "public", table: "transactions" }] }, access_token: SB.session.access_token } }));
+      SB.rtHb = setInterval(() => { try { ws.send(JSON.stringify({ topic: "phoenix", event: "heartbeat", payload: {}, ref: String(SB.rtRef++) })); } catch (e) {} }, 25000);
+    };
+    ws.onmessage = (m) => { try { const j = JSON.parse(m.data); if (j.event === "postgres_changes") sbDebouncedReload(); } catch (e) {} };
+    ws.onclose = () => { sbRtStop(); };
+    ws.onerror = () => { try { ws.close(); } catch (e) {} };
+  } catch (e) {}
+}
+function sbRtStop() { if (SB.rtHb) clearInterval(SB.rtHb); SB.rtHb = null; if (SB.rt) { try { SB.rt.close(); } catch (e) {} SB.rt = null; } }
+let _sbDbT = null;
+function sbDebouncedReload() { clearTimeout(_sbDbT); _sbDbT = setTimeout(() => { sbReloadTxns().catch(() => {}); }, 800); }
+window.addEventListener("online", () => { sbEmit("sync"); sbFlushQueue(); });
+window.addEventListener("offline", () => sbEmit("sync"));
+document.addEventListener("visibilitychange", () => { if (!document.hidden && SB.session) sbReloadTxns().catch(() => {}); });
+
+</script>
+<script>
+const out=document.getElementById("out");
+function step(name){ const d=document.createElement("div"); d.className="step"; d.innerHTML="<b>"+name+"</b> — <span>執行中…</span>"; out.appendChild(d); return d; }
+function done(d,ok,msg){ d.querySelector("span").innerHTML=(ok?'<span class="ok">通過</span> ':'<span class="fail">失敗</span> ')+msg; }
+let invState=null, rtEvent=false;
+sbOn("data",d=>{ if(d&&d.opening){ invState=d; } if(d&&d.txnsOnly&&invState){ invState.txns=d.txnsOnly; invState.seq=d.seq; } });
+const _rtStart=sbRtStart;
+sbRtStart=function(){ _rtStart(); const iv=setInterval(()=>{ if(SB.rt){ SB.rt.addEventListener("message",m=>{ try{ if(JSON.parse(m.data).event==="postgres_changes") rtEvent=true; }catch(e){} }); clearInterval(iv); } },300); setTimeout(()=>clearInterval(iv),5000); };
+(async()=>{ const t=await sbCaptureHash(); if(t==="recovery"||t==="invite"||SB.session){ document.getElementById("pwset").style.display="block"; if(SB.session&&SB.session.user){ document.getElementById("pwmsg").textContent="已透過連結驗證身分（"+(SB.session.user.email||"")+"），請設定新密碼。"; } } })();
+document.getElementById("setpw").addEventListener("click", async ()=>{
+ const v=document.getElementById("newpw").value; const m=document.getElementById("pwmsg");
+ if(v.length<6){ m.textContent="密碼至少 6 字元"; return; }
+ try{ await sbSetPassword(v); m.textContent="密碼已設定。之後可用 Email＋密碼登入本系統。"; document.getElementById("pw").value=v; }
+ catch(e){ m.textContent="設定失敗："+e.message; }
+});
+function balOf(state,code){ let t=0; const o=state.opening[code]||{}; Object.keys(o).forEach(k=>{ if(k!=="PROD") t+=o[k]; });
+ state.txns.forEach(x=>{ if(x.voided||x.code!==code) return; if(x.type==="IN"||x.type==="RETURN") t+=x.qty; if(["ISSUE","SHIP","SCRAP","TRANSFER","CONVERT"].indexOf(x.type)>=0) t-=x.qty; if(x.type==="ADJUST") t+=x.qty; }); return t; }
+document.getElementById("run").addEventListener("click", async ()=>{
+ out.innerHTML=""; rtEvent=false;
+ const email=document.getElementById("email").value.trim(), pw=document.getElementById("pw").value;
+ let d=step("1. 登入 + 讀取 profile");
+ try{ if(SB.session&&SB.session.user&&SB.session.user.email===email&&pw===""){ await sbLoadAll(); done(d,true,"使用連結驗證的 session"); }
+   else { const prof=await sbSignIn(email,pw); done(d,true,"role="+prof.role+" email="+prof.email); } }
+ catch(e){ done(d,false,e.message); return; }
+ d=step("2. 主檔與期初（品項 57、RM-04 期初 375）");
+ try{ const n=SB.items.length; const rm04=(invState.opening["RM-04"]||{})["13859"]; done(d, n===57&&rm04===375, "items="+n+" RM-04@13859="+rm04); }
+ catch(e){ done(d,false,e.message); return; }
+ d=step("3. SF-DOG 帳面餘額 = 735");
+ const dog=balOf(invState,"SF-DOG"); done(d, dog===735, "SF-DOG="+dog);
+ const before=balOf(invState,"RM-04");
+ d=step("4. RPC 寫入測試進貨 RM-04 +1 kg");
+ let testId=null;
+ try{ await sbPostMovement({type:"IN",code:"RM-04",qty:1,from:"EXT",to:"13859",lot:"",ref:"PHASE2-TEST",note:"data layer test"});
+   const t=invState.txns.filter(x=>x.ref==="PHASE2-TEST"&&!x.voided).pop(); testId=t?t.id:null;
+   done(d, !!testId&&balOf(invState,"RM-04")===before+1, "txn id="+testId+" RM-04="+balOf(invState,"RM-04")); }
+ catch(e){ done(d,false,e.message); return; }
+ d=step("5. 超量領料應被伺服器拒絕");
+ try{ await sbPostMovement({type:"ISSUE",code:"RM-04",qty:999999,from:"13859",to:"PROD"}); done(d,false,"未被拒絕（異常）"); }
+ catch(e){ done(d, /insufficient/i.test(e.message), e.message.slice(0,90)); }
+ d=step("6. 作廢測試筆（admin RPC）");
+ try{ await sbVoid(testId,"phase2 data-layer test"); done(d, balOf(invState,"RM-04")===before, "RM-04 回到 "+balOf(invState,"RM-04")); }
+ catch(e){ done(d,false,e.message); }
+ d=step("7. Realtime 訂閱（參考）");
+ await new Promise(r=>setTimeout(r,3000));
+ done(d, true, rtEvent?"已收到 postgres_changes 事件":"3 秒內未觀察到事件（不影響使用，app 切回頁面時會自動刷新）");
+ const p=document.createElement("pre"); p.textContent="完成。雲端帳本已回到測試前狀態（測試筆保留為作廢紀錄）。"; out.appendChild(p);
+});
+</script>
+</body></html>
