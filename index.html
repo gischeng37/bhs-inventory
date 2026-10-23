@@ -121,6 +121,17 @@ img,svg{max-width:100%}
  </div>
 </div>
 
+<div class="card" data-sec="users" id="usersCard" style="display:none">
+ <h2>👥 使用者管理（Admin 專用）</h2>
+ <div class="small">邀請新使用者、調整角色、移除權限或刪除帳號。被邀請者收到 email 後，點連結設定密碼即可登入。</div>
+ <div id="usersTblWrap" style="margin-top:8px"></div>
+ <div class="fgrid" style="margin-top:10px">
+  <label>Email<input id="nuEmail" type="email"></label>
+  <label>角色 Role<select id="nuRole"><option value="operator" selected>operator</option><option value="admin">admin</option><option value="viewer">viewer</option></select></label>
+ </div>
+ <div style="margin-top:8px"><button class="primary" id="nuBtn">寄邀請</button> <span class="small" id="nuMsg"></span></div>
+</div>
+
 <div class="card" data-sec="params"><h2>⚙️ 參數面板（模塊參數化）</h2>
 <div class="grid">
 <div>
@@ -951,7 +962,7 @@ $("log_csv").addEventListener("click",()=>{
 (function(){ const n=new Date(); const iso=new Date(n.getTime()-n.getTimezoneOffset()*60000).toISOString().slice(0,16); $("tx_time").value=iso; })();
 populateTxItems();
 /* ===== Collapsible sections + quick nav ===== */
-const SECDEF={params:0,dash:1,master:1,chart1:1,chart2:0,chart3:0,plan:0,inv:1,cust:0};
+const SECDEF={users:0,params:0,dash:1,master:1,chart1:1,chart2:0,chart3:0,plan:0,inv:1,cust:0};
 let LAY={}; try{LAY=JSON.parse(localStorage.getItem("bhs-layout")||"{}");}catch(e){}
 function laySave(){ try{localStorage.setItem("bhs-layout",JSON.stringify(LAY));}catch(e){} }
 function secOpen(id){ return LAY[id]!=null?LAY[id]==1:SECDEF[id]==1; }
@@ -1118,6 +1129,7 @@ function updateAuthUI(){ const inS=!!SB.session;
  } else if(inS){ $("authInfo").textContent=L('已登入，載入中…','Signed in, loading...'); }
  const dis=cloudMode()&&!cloudCanWrite();
  ["tx_type","tx_item","tx_fg","tx_qty","tx_from","tx_to","tx_lot","tx_ref","tx_note","tx_add"].forEach(id=>{ const el=$(id); if(el) el.disabled=dis; });
+ const uc=$("usersCard"); if(uc){ const show=cloudAdmin(); uc.style.display=show?"":"none"; if(show) loadUsers(); }
  syncChip(); renderQueueBox();
 }
 $("liBtn").addEventListener("click",async()=>{ const em=$("liEmail").value.trim(), pw=$("liPw").value;
@@ -1134,6 +1146,39 @@ $("syncBtn").addEventListener("click",async()=>{ try{ await sbFlushQueue(); awai
 $("pwBtn").addEventListener("click",async()=>{ const v=$("pwNew").value; if(v.length<6){ alert(L('密碼至少 6 字元','Password needs 6+ characters')); return; }
  try{ await sbSetPassword(v); $("pwSet").style.display="none"; alert(L('密碼已設定，之後用 Email＋密碼登入。','Password set. Sign in with email + password from now on.')); if(SB.session){ try{ await sbLoadAll(); }catch(e){} } }
  catch(e){ alert(e.message); } });
+/* ===== User management (admin only) ===== */
+PAIRS.push(
+["👥 使用者管理（Admin 專用）","👥 User Management (Admin)"],
+["邀請新使用者、調整角色、移除權限或刪除帳號。被邀請者收到 email 後，點連結設定密碼即可登入。","Invite users, change roles, remove access or delete accounts. Invited users receive an email and set their password via the link."],
+["寄邀請","Send invite"]
+);
+async function sbFn(body){ const tk=await sbToken(); if(!tk) throw new Error("not signed in");
+ const r=await fetch(SB_URL+"/functions/v1/invite-user",{method:"POST",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+tk,"Content-Type":"application/json"},body:JSON.stringify(body)});
+ const j=await r.json().catch(()=>({})); if(!r.ok||j.error) throw new Error(j.error||("HTTP "+r.status)); return j; }
+async function loadUsers(){ if(!cloudAdmin()) return; try{ const rows=await sbRest("profiles?select=id,email,role,created_at&order=created_at.asc"); renderUsers(rows||[]); }catch(e){} }
+function renderUsers(rows){ const w=$("usersTblWrap"); if(!w) return;
+ let h="<div class='tblwrap'><table class='tbl'><thead><tr><th>Email</th><th>"+L('角色','Role')+"</th><th>"+L('建立時間','Created')+"</th><th></th></tr></thead><tbody>";
+ rows.forEach(u=>{ const self=SB.session&&SB.session.user&&u.id===SB.session.user.id;
+  h+="<tr><td>"+esc(u.email)+(self?" ("+L('你','you')+")":"")+"</td>"
+   +"<td><select data-role='"+u.id+"'><option value='admin'"+(u.role=="admin"?" selected":"")+">admin</option><option value='operator'"+(u.role=="operator"?" selected":"")+">operator</option><option value='viewer'"+(u.role=="viewer"?" selected":"")+">viewer</option></select></td>"
+   +"<td>"+String(u.created_at||"").slice(0,10)+"</td>"
+   +"<td style='white-space:nowrap'><button class='btn alt' data-ungrant='"+u.id+"' style='padding:1px 8px;font-size:12px'>"+L('移除權限','Remove access')+"</button> <button class='btn alt' data-udel='"+u.id+"' data-email='"+esc(u.email)+"' style='padding:1px 8px;font-size:12px'"+(self?" disabled":"")+">"+L('刪除帳號','Delete account')+"</button></td></tr>"; });
+ h+="</tbody></table></div>";
+ w.innerHTML=h;
+ w.querySelectorAll("[data-role]").forEach(sel=>{ sel.addEventListener("change",async()=>{ const id=sel.getAttribute("data-role");
+   try{ await sbRest("profiles?id=eq."+id,{method:"PATCH",headers:{"Prefer":"return=minimal"},body:{role:sel.value}}); }catch(e){ alert(e.message); loadUsers(); } }); });
+ w.querySelectorAll("[data-ungrant]").forEach(b=>{ b.addEventListener("click",async()=>{ const id=b.getAttribute("data-ungrant");
+   if(!confirm(L('移除此人的資料權限？（帳號保留，之後可再授權）','Remove this user data access? (account kept, can re-grant later)'))) return;
+   try{ await sbRest("profiles?id=eq."+id,{method:"DELETE"}); loadUsers(); }catch(e){ alert(e.message); } }); });
+ w.querySelectorAll("[data-udel]").forEach(b=>{ b.addEventListener("click",async()=>{ const id=b.getAttribute("data-udel"), em=b.getAttribute("data-email");
+   if(!confirm(L('確定刪除帳號 ','Delete account ')+em+L('？此動作無法復原（歷史流水的經手紀錄會保留）。','? This cannot be undone (their name stays on past transactions).'))) return;
+   try{ await sbFn({action:"delete_user",user_id:id}); loadUsers(); }catch(e){ alert(e.message); } }); });
+}
+$("nuBtn").addEventListener("click",async()=>{ const em=$("nuEmail").value.trim(), role=$("nuRole").value;
+ if(!em){ $("nuMsg").textContent=L('請輸入 Email','Enter an email'); return; }
+ $("nuMsg").textContent=L('寄送中…','Sending...');
+ try{ await sbFn({action:"invite",email:em,role:role,redirectTo:location.href.split("#")[0]}); $("nuMsg").textContent=L('邀請已寄出','Invite sent'); $("nuEmail").value=""; loadUsers(); }
+ catch(e){ $("nuMsg").textContent=L('失敗：','Failed: ')+e.message; } });
 (async function bootCloud(){
  const t=await sbCaptureHash();
  if(t==="invite"||t==="recovery"){ const ps=$("pwSet"); if(ps) ps.style.display=""; const ao=$("authOut"); if(ao) ao.style.display="none"; }
