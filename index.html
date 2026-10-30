@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BHS 模塊化管理系統 v6 — 雲端同步・進銷存・雙語版（BioHealth Solutions）</title>
+<title>BHS 模塊化管理系統 v6.1 — 雲端同步・進銷存・雙語版（BioHealth Solutions）</title>
 <style>
 *{box-sizing:border-box}
 body{font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;margin:0;background:#eef1f6;color:#1c2733;line-height:1.55}
@@ -80,7 +80,7 @@ img,svg{max-width:100%}
  .gauge .gv{font-size:17px}
 }
 </style></head><body>
-<div class="top"><h1>BHS 模塊化管理系統 v6 — 雲端同步・進銷存・雙語・儀表板版</h1>
+<div class="top"><h1>BHS 模塊化管理系統 v6.1 — 雲端同步・進銷存・雙語・儀表板版</h1>
 <div class="seg" id="langSeg" style="margin-top:8px"><button data-lang="zh" class="on">中文</button><button data-lang="en">English</button></div>
 <div class="sub">BioHealth Solutions（AminAvast / RenAvast）｜改任一參數或庫存 → 管理總表、圖表、生產計畫全部連動重算｜數據基準：歷史分析 v1.2 + MMR 配方（Cat BHS-01US / Dog BHS-02US）｜庫存初始值為 2024-01-10 盤點快照，已載入進銷存模塊期初；之後用異動登記維護，總表/儀表板即時連動</div></div>
 <div class="wrap">
@@ -187,10 +187,11 @@ img,svg{max-width:100%}
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
 <select id="fProduct" style="max-width:170px"><option value="all">產品：全部</option><option value="Cat">Cat</option><option value="Dog">Dog</option><option value="共用">共用</option><option value="泰國線">泰國線</option></select>
 <select id="fStatus" style="max-width:190px"><option value="all">狀態：全部</option><option value="red">🔴 低於警戒</option><option value="yellow">🟡 低於水位</option><option value="green">🟢 正常</option><option value="grey">⚪ 待盤點</option></select>
+<select id="fOwn" style="max-width:210px"><option value="all">歸屬：全部</option><option value="customer">客供（BHS 供料）</option><option value="ami">公司自有（AMI 採購）</option><option value="none">未標記</option></select>
 <input type="text" id="fSearch" placeholder="搜尋品項 / 編碼…" style="max-width:240px">
 </div>
 <div class="tblwrap"><table id="masterTbl"><thead><tr>
-<th>模塊</th><th>編碼</th><th>品項</th><th>產品</th><th class="num">庫存（可改）</th><th>單位</th><th class="num">月用量</th><th class="num">覆蓋（月）</th><th class="num">水位</th><th class="num">應補 / 應通知</th><th>狀態</th>
+<th>模塊</th><th>編碼</th><th>品項</th><th>歸屬</th><th>產品</th><th class="num">庫存（可改）</th><th>單位</th><th class="num">月用量</th><th class="num">覆蓋（月）</th><th class="num">水位</th><th class="num">應補 / 應通知</th><th>狀態</th>
 </tr></thead><tbody></tbody></table></div>
 <div class="legend">狀態規則：🔴 覆蓋 &lt; 警戒月數（原料=供應週期、半成品=0.5 月、包材=0.5 月）｜🟡 覆蓋 &lt; 水位｜🟢 達水位｜⚪ 尚無庫存數（在進銷存模塊設定期初或登記異動後即啟用判讀；庫存欄的數字來自進銷存即時計算）。標籤水位依 ABC：A 級 2 月 / B 級 3 月 / C 級 6 月。</div>
 </div>
@@ -242,15 +243,16 @@ img,svg{max-width:100%}
 <span class="small" id="tx_msg"></span>
 </div>
 <h3>各倉即時庫存（期初可改）</h3>
-<div class="tblwrap"><table id="whTbl"><thead><tr><th>品項</th><th>單位</th><th class="num">期初 13859</th><th class="num">期初 13863</th><th class="num">期初 960</th><th class="num">13859</th><th class="num">13863</th><th class="num">960</th><th class="num">產線在製</th><th class="num">合計</th></tr></thead><tbody></tbody></table></div>
+<div class="tblwrap"><table id="whTbl"><thead><tr><th>品項</th><th>歸屬</th><th>單位</th><th class="num">期初 13859</th><th class="num">期初 13863</th><th class="num">期初 960</th><th class="num">13859</th><th class="num">13863</th><th class="num">960</th><th class="num">產線在製</th><th class="num">合計</th></tr></thead><tbody></tbody></table></div>
 <div class="legend">即時庫存 = 期初 + 流水淨額。期初欄位直接改數字即生效（改期初不會寫入 Log；日常流動請一律用上方異動登記，Log 才完整）。成品 FG 為貼標轉換的入帳品項。</div>
 <h3>異動 Log（流水帳）</h3>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
 <select id="log_type" style="max-width:170px"><option value="all">類型：全部</option><option value="IN">進貨</option><option value="ISSUE">領料</option><option value="RETURN">退料</option><option value="TRANSFER">轉運</option><option value="SHIP">出貨</option><option value="CONVERT">貼標轉換</option><option value="ADJUST">盤點調整</option><option value="SCRAP">損耗</option></select>
+<select id="log_own" style="max-width:210px"><option value="all">歸屬：全部</option><option value="customer">客供（BHS 供料）</option><option value="ami">公司自有（AMI 採購）</option><option value="none">未標記</option></select>
 <input type="text" id="log_search" placeholder="搜尋品項 / 批號 / 單號" style="max-width:230px">
 <button class="btn alt" id="log_csv">⬇ 匯出 Log CSV</button>
 </div>
-<div class="tblwrap"><table id="logTbl"><thead><tr><th>#</th><th>時間</th><th>類型</th><th>品項</th><th class="num">數量</th><th>來源 → 目的</th><th>批號</th><th>單號</th><th>經手</th><th>備註</th><th></th></tr></thead><tbody></tbody></table></div>
+<div class="tblwrap"><table id="logTbl"><thead><tr><th>#</th><th>時間</th><th>類型</th><th>品項</th><th>歸屬</th><th class="num">數量</th><th>來源 → 目的</th><th>批號</th><th>單號</th><th>經手</th><th>備註</th><th></th></tr></thead><tbody></tbody></table></div>
 </div>
 
 <div class="card" data-sec="cust"><h2>👥 客戶節奏（預測基線，可篩選）</h2>
@@ -258,7 +260,7 @@ img,svg{max-width:100%}
 <div class="tblwrap"><table id="custTbl"><thead><tr><th>客戶</th><th>節奏</th><th class="num">Cat 年量</th><th class="num">Dog 年量</th><th style="width:34%">相對量</th></tr></thead><tbody></tbody></table></div>
 <div class="legend">來源：原檔 Cat Proj / Dog Proj。注意：2025 實際出貨已超過此基線總量（351,952），請以參數面板的需求情境為準，客戶表用來看「節奏型態」。</div></div>
 
-<div class="small">BHS 模塊化管理系統 v6（雲端同步版）｜與 v1.2 Excel 工作簿為同一套參數與口徑；Excel 版保留為正式記錄，本頁為日常操作版。數據：Dr._Mark_product_inventory.xlsx 全量分析 + MMR 主檔照片（2026-10-22）。</div>
+<div class="small">BHS 模塊化管理系統 v6.1（雲端同步版）｜與 v1.2 Excel 工作簿為同一套參數與口徑；Excel 版保留為正式記錄，本頁為日常操作版。數據：Dr._Mark_product_inventory.xlsx 全量分析 + MMR 主檔照片（2026-10-22）。</div>
 </div>
 <script>
 "use strict";
@@ -296,7 +298,12 @@ stocks["SF-CAT"]=14185; stocks["SF-DOG"]=735;
 stocks["PK-BOTTLE"]=31942; stocks["PK-FOIL"]=6448; stocks["PK-TBOXC"]=3635; stocks["PK-TBOXD"]=4800;
 LABELS.forEach(l=>stocks[l[0]]=null);
 ["PK-PLAIN","PK-CAP","PK-DESC","PK-COIL","PK-SHRINK","PK-IBOX","PK-CASE"].forEach(k=>stocks[k]=null);
-let F={module:"all",product:"all",status:"all",search:"",abc:"all",hist:"both",rhythm:"all",planMonths:6};
+let F={module:"all",product:"all",status:"all",own:"all",search:"",abc:"all",hist:"both",rhythm:"all",planMonths:6};
+/* v6.1 ownership （歸屬）: code -> 'customer' 客供 / 'ami' 公司自有； missing = 未標記.
+   Display/filter dimension only — it never feeds any stock computation.
+   A cloud load replaces this map with the server items' ownership values. */
+let OWNERSHIP={}; try{ OWNERSHIP=JSON.parse(localStorage.getItem("bhs-own-v6")||"{}")||{}; }catch(e){}
+function ownOf(code){ const v=OWNERSHIP[code]; return (v=="customer"||v=="ami")?v:"none"; }
 let planOverride=null;
 try{const s=JSON.parse(localStorage.getItem("bhsv2")||"null"); if(s){P=Object.assign({},DEFP,s.P||{}); Object.assign(stocks,s.stocks||{});}}catch(e){}
 function save(){try{localStorage.setItem("bhsv2",JSON.stringify({P:P,stocks:stocks}));}catch(e){} if(typeof scheduleCloudParams==="function") scheduleCloudParams(); }
@@ -363,7 +370,7 @@ function buildRows(){
 }
 </script>
 <script>
-/* BHS v6 — Supabase data layer (no dependencies, plain fetch).
+/* BHS v6.1 — Supabase data layer (no dependencies, plain fetch).
    Model: server is the source of truth. Local INV state mirrors v5.1's
    {opening:{code:{loc:qty}}, txns:[{id,ts,type,code,code2,qty,from,to,lot,ref,op,note,voided}], seq}
    Writes go through the validated RPC (post_transaction / void_transaction).
@@ -381,6 +388,7 @@ const SB = {
   clientId: null,
   items: [],          // server item rows
   idByCode: {}, codeById: {},
+  ownByCode: {},      // v6.1: code -> 'customer' | 'ami' | null (untagged); missing column reads as null
   paramsVersion: 1,
   rt: null, rtRef: 2, rtHb: null, rtReady: false,
   listeners: { auth: [], sync: [], data: [] }
@@ -495,8 +503,10 @@ async function sbLoadAll() {
   if (!prof || !prof.length) throw new Error("This account has no profile / role yet. Ask the admin to grant one.");
   SB.profile = prof[0]; SB.clientId = prof[0].client_id;
   const items = await sbFetchAll("items?select=*&order=code.asc");
-  SB.items = items; SB.idByCode = {}; SB.codeById = {};
-  items.forEach(i => { SB.idByCode[i.code] = i.id; SB.codeById[i.id] = i.code; });
+  SB.items = items; SB.idByCode = {}; SB.codeById = {}; SB.ownByCode = {};
+  items.forEach(i => { SB.idByCode[i.code] = i.id; SB.codeById[i.id] = i.code;
+    // v6.1: defensive — until 03_items_ownership.sql runs, rows have no ownership property -> null (未標記)
+    SB.ownByCode[i.code] = (i.ownership === "customer" || i.ownership === "ami") ? i.ownership : null; });
   const ops = await sbFetchAll("opening_balances?select=item_id,warehouse_code,qty");
   const opening = {};
   ops.forEach(o => { const c = SB.codeById[o.item_id]; if (!c) return; (opening[c] = opening[c] || {})[o.warehouse_code] = +o.qty; });
@@ -507,8 +517,8 @@ async function sbLoadAll() {
   let params = null;
   if (prm && prm.length) { params = prm[0].params; SB.paramsVersion = prm[0].version || 1; }
   sbRtStart();
-  sbEmit("data", { opening, txns: log, seq, params });
-  return { opening, txns: log, seq, params };
+  sbEmit("data", { opening, txns: log, seq, params, ownership: SB.ownByCode });
+  return { opening, txns: log, seq, params, ownership: SB.ownByCode };
 }
 async function sbReloadTxns() {
   if (!SB.session || !SB.profile) return;
@@ -560,6 +570,20 @@ async function sbSetOpening(code, loc, qty) {
     body: { client_id: SB.clientId, item_id: itemId, warehouse_code: loc, qty: qty, updated_by: SB.session.user.id }
   });
 }
+/* v6.1: set one item's ownership ('customer' | 'ami' | null). Isolated write:
+   a failure here (e.g. ownership column not yet added in the DB) throws a clear
+   error and never touches opening balances, params or transactions. */
+async function sbSetOwnership(code, value) {
+  const itemId = SB.idByCode[code]; if (!itemId) throw new Error("unknown item " + code);
+  if (value !== null && value !== "customer" && value !== "ami") throw new Error("invalid ownership value: " + value);
+  try {
+    await sbRest("items?id=eq." + itemId, { method: "PATCH", headers: { "Prefer": "return=minimal" }, body: { ownership: value } });
+  } catch (e) {
+    throw new Error("歸屬儲存失敗 Ownership save failed（資料庫可能尚未執行 03_items_ownership.sql）: " + e.message);
+  }
+  SB.ownByCode[code] = value;
+  return true;
+}
 async function sbSaveParams(params) {
   SB.paramsVersion = (SB.paramsVersion || 1) + 1;
   return sbRest("app_params?client_id=eq." + SB.clientId, {
@@ -590,7 +614,6 @@ function sbDebouncedReload() { clearTimeout(_sbDbT); _sbDbT = setTimeout(() => {
 window.addEventListener("online", () => { sbEmit("sync"); sbFlushQueue(); });
 window.addEventListener("offline", () => sbEmit("sync"));
 document.addEventListener("visibilitychange", () => { if (!document.hidden && SB.session) sbReloadTxns().catch(() => {}); });
-
 </script>
 <script>
 "use strict";
@@ -606,11 +629,13 @@ let MODNAME=MODNAME_ZH, PRODNAME=PRODNAME_ZH, STXT=STXT_ZH;
 const CHIP2MOD={"原料":"RM","半成品":"SF","標籤":"LB","包材":"PK"};
 const SEL2PROD={"Cat":"Cat","Dog":"Dog","共用":"BOTH","泰國線":"THAI"};
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function ownLabel(code){ const v=ownOf(code); return v=="customer"?L('客供','Customer-supplied'):v=="ami"?L('公司自有','AMI-owned'):L('未標記','Untagged'); }
 function filteredRows(rows){
  return rows.filter(r=>{
   if(F.module!="all"&&r.mod!=F.module) return false;
   if(F.product!="all"&&r.prod!=F.product&&r.prod!="BOTH") return false;
   if(F.status!="all"&&r.st[0]!=F.status) return false;
+  if(F.own!="all"&&ownOf(r.code)!=F.own) return false;
   if(F.search){const q=F.search.toLowerCase(); if((r.name+" "+r.code).toLowerCase().indexOf(q)<0) return false;}
   return true;
  });
@@ -619,13 +644,13 @@ function renderMaster(){
  const rows=filteredRows(buildRows());
  const tb=document.querySelector("#masterTbl tbody"); let h="";
  rows.forEach(r=>{
-  h+="<tr><td>"+MODNAME[r.mod]+"</td><td>"+r.code+"</td><td>"+esc(r.name)+"</td><td>"+PRODNAME[r.prod]+"</td>"
+  h+="<tr><td>"+MODNAME[r.mod]+"</td><td>"+r.code+"</td><td>"+esc(r.name)+"</td><td>"+ownLabel(r.code)+"</td><td>"+PRODNAME[r.prod]+"</td>"
    +"<td class='num'>"+(r.stock==null?L('待盤點','no count'):fmt(r.stock))+" <button class='btn alt' data-jump='"+r.code+"' style='padding:1px 8px;font-size:12px'>"+L('異動','Move')+"</button></td>"
    +"<td>"+r.unit+"</td><td class='num'>"+fmt(r.monthly)+"</td><td class='num'>"+fmt1(r.cov)+"</td>"
    +"<td class='num'>"+fmt(r.level)+"</td><td class='num'>"+fmt(r.action)+"</td>"
    +"<td><span class='pill "+r.st[0]+"'>"+STXT[r.st[0]]+"</span></td></tr>";
  });
- tb.innerHTML=h||"<tr><td colspan='11'>"+L("（此篩選下沒有品項）","(No items under this filter)")+"</td></tr>";
+ tb.innerHTML=h||"<tr><td colspan='12'>"+L("（此篩選下沒有品項）","(No items under this filter)")+"</td></tr>";
  tb.querySelectorAll("[data-jump]").forEach(btn=>{
   btn.addEventListener("click",()=>{ const sel=$("tx_item"); if(sel){ sel.value=btn.getAttribute("data-jump"); } const f=$("tx_qty"); if(f){ f.focus(); } window.scrollTo({top:document.getElementById("tx_type").getBoundingClientRect().top+window.scrollY-140,behavior:"smooth"}); });
  });
@@ -831,6 +856,7 @@ segWire("#scenarioSeg",b=>{const sc=SCEN[b.getAttribute("data-sc")]; if(!sc) ret
 segWire("#fModule",b=>{const m=b.getAttribute("data-m"); F.module=m=="all"?"all":CHIP2MOD[m]; renderMaster();});
 $("fProduct").addEventListener("change",()=>{const v=$("fProduct").value; F.product=v=="all"?"all":SEL2PROD[v]; renderMaster();});
 $("fStatus").addEventListener("change",()=>{F.status=$("fStatus").value; renderMaster();});
+$("fOwn").addEventListener("change",()=>{F.own=$("fOwn").value; renderMaster(); renderWh();});
 $("fSearch").addEventListener("input",()=>{F.search=$("fSearch").value; renderMaster();});
 segWire("#abcSeg",b=>{F.abc=b.getAttribute("data-a"); renderChartLabel();});
 segWire("#histSeg",b=>{F.hist=b.getAttribute("data-h"); renderChartHist();});
@@ -857,9 +883,16 @@ function renderWh(){
  const tb=document.querySelector("#whTbl tbody"); if(!tb) return;
  const bal=invBalances(); let h="";
  ITEMREG.forEach(it=>{
+  if(F.own!="all"&&ownOf(it.code)!=F.own) return;
   const o=INV.opening[it.code]||{}; const b=bal[it.code];
   const tot=b["13859"]+b["13863"]+b["960"];
-  h+="<tr><td>"+it.code+" "+esc(it.name)+"</td><td>"+it.unit+"</td>"
+  const odis=(cloudMode()&&!cloudAdmin())?" disabled":"";
+  h+="<tr><td>"+it.code+" "+esc(it.name)+"</td>"
+   +"<td><select class='ownsel' data-code='"+it.code+"'"+odis+">"
+   +"<option value=''"+(ownOf(it.code)=="none"?" selected":"")+">"+L('未標記','Untagged')+"</option>"
+   +"<option value='customer'"+(ownOf(it.code)=="customer"?" selected":"")+">"+L('客供','Customer-supplied')+"</option>"
+   +"<option value='ami'"+(ownOf(it.code)=="ami"?" selected":"")+">"+L('公司自有','AMI-owned')+"</option></select></td>"
+   +"<td>"+it.unit+"</td>"
    +WHS.map(w=>"<td class='num'><input class='openin' data-code='"+it.code+"' data-loc='"+w+"' type='number' step='any' value='"+(o[w]==null?"":o[w])+"'"+(cloudMode()&&!cloudAdmin()?" disabled":"")+"></td>").join("")
    +WHS.map(w=>"<td class='num'>"+fmt(b[w])+"</td>").join("")
    +"<td class='num'>"+fmt(b["PROD"])+"</td><td class='num'><b>"+fmt(tot)+"</b></td></tr>";
@@ -874,12 +907,21 @@ function renderWh(){
    if(v==="") delete INV.opening[code][loc]; else INV.opening[code][loc]=parseFloat(v);
    invSave(); renderAll(false); });
  });
+ tb.querySelectorAll(".ownsel").forEach(sel=>{
+  sel.addEventListener("change",()=>{ const code=sel.getAttribute("data-code"), v=sel.value||null;
+   const apply=()=>{ if(v) OWNERSHIP[code]=v; else delete OWNERSHIP[code]; try{localStorage.setItem("bhs-own-v6",JSON.stringify(OWNERSHIP));}catch(e){} renderAll(false); };
+   if(cloudMode()){ if(!cloudAdmin()){ renderAll(false); return; }
+    sbSetOwnership(code, v).then(apply).catch(e=>{ alert(e.message); renderAll(false); });
+    return; }
+   apply(); });
+ });
 }
 function renderLog(){
  const tb=document.querySelector("#logTbl tbody"); if(!tb) return;
- const ft=$("log_type").value, q=($("log_search").value||"").toLowerCase();
+ const ft=$("log_type").value, fo=$("log_own").value, q=($("log_search").value||"").toLowerCase();
  const list=INV.txns.slice().reverse().filter(t=>{
   if(ft!="all"&&t.type!=ft) return false;
+  if(fo!="all"&&ownOf(t.code)!=fo) return false;
   if(q){ const s=(t.code+" "+(ITEMMAP[t.code]?ITEMMAP[t.code].name:"")+" "+(t.lot||"")+" "+(t.ref||"")).toLowerCase(); if(s.indexOf(q)<0) return false; }
   return true;
  });
@@ -887,10 +929,11 @@ function renderLog(){
   const nm=ITEMMAP[t.code]?ITEMMAP[t.code].name:t.code;
   const nm2=t.code2?(ITEMMAP[t.code2]?ITEMMAP[t.code2].name:t.code2):"";
   return "<tr class='"+(t.voided?"voided":"")+"'><td>"+t.id+"</td><td>"+t.ts.replace("T"," ").slice(0,16)+"</td><td>"+txName(t.type)+"</td>"
-   +"<td>"+t.code+" "+esc(nm)+(t.code2?" → "+t.code2+" "+esc(nm2):"")+"</td><td class='num'>"+fmt(t.qty)+"</td>"
+   +"<td>"+t.code+" "+esc(nm)+(t.code2?" → "+t.code2+" "+esc(nm2):"")+"</td>"
+   +"<td>"+ownLabel(t.code)+((t.code2&&ownOf(t.code2)!=ownOf(t.code))?" → "+ownLabel(t.code2):"")+"</td><td class='num'>"+fmt(t.qty)+"</td>"
    +"<td>"+locName(t.from)+" → "+locName(t.to)+"</td><td>"+esc(t.lot||"")+"</td><td>"+esc(t.ref||"")+"</td><td>"+esc(t.op||"")+"</td><td>"+esc(t.note||"")+"</td>"
    +"<td>"+(t.voided?L('已作廢','Voided'):"<button class='btn alt' data-void='"+t.id+"' style='padding:1px 8px;font-size:12px'>"+L('作廢','Void')+"</button>")+"</td></tr>";
- }).join(""):"<tr><td colspan='11'>"+L('尚無流水紀錄','No transactions yet')+"</td></tr>";
+ }).join(""):"<tr><td colspan='12'>"+L('尚無流水紀錄','No transactions yet')+"</td></tr>";
  tb.querySelectorAll("[data-void]").forEach(btn=>{
   btn.addEventListener("click",()=>{ const id=parseInt(btn.getAttribute("data-void")); const t=INV.txns.find(x=>x.id==id); if(!t) return;
    if(cloudMode()){ if(!cloudAdmin()){ alert(L('只有 admin 可以作廢','Only admin can void')); return; }
@@ -953,10 +996,11 @@ function addTxn(){
 $("tx_type").addEventListener("change",fillLocs);
 $("tx_add").addEventListener("click",addTxn);
 $("log_type").addEventListener("change",renderLog);
+$("log_own").addEventListener("change",renderLog);
 $("log_search").addEventListener("input",renderLog);
 $("log_csv").addEventListener("click",()=>{
- let csv="id,time,type,item,qty,from,to,lot,ref,operator,note,voided\n";
- INV.txns.forEach(t=>{ csv+=[t.id,t.ts,t.type,t.code+(t.code2?"->"+t.code2:""),t.qty,t.from,t.to,"\""+(t.lot||"")+"\"","\""+(t.ref||"")+"\"","\""+(t.op||"")+"\"","\""+(t.note||"")+"\"",t.voided?1:0].join(",")+"\n"; });
+ let csv="id,time,type,item,ownership,qty,from,to,lot,ref,operator,note,voided\n";
+ INV.txns.forEach(t=>{ csv+=[t.id,t.ts,t.type,t.code+(t.code2?"->"+t.code2:""),ownOf(t.code),t.qty,t.from,t.to,"\""+(t.lot||"")+"\"","\""+(t.ref||"")+"\"","\""+(t.op||"")+"\"","\""+(t.note||"")+"\"",t.voided?1:0].join(",")+"\n"; });
  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"})); a.download="BHS_inventory_log.csv"; a.click();
 });
 (function(){ const n=new Date(); const iso=new Date(n.getTime()-n.getTimezoneOffset()*60000).toISOString().slice(0,16); $("tx_time").value=iso; })();
@@ -993,7 +1037,7 @@ function initSections(){
 }
 initSections();
 const PAIRS=[
-["BHS 模塊化管理系統 v6 — 雲端同步・進銷存・雙語・儀表板版","BHS Modular System v6 - Cloud Sync, Inventory, Bilingual Dashboard"],
+["BHS 模塊化管理系統 v6.1 — 雲端同步・進銷存・雙語・儀表板版","BHS Modular System v6.1 - Cloud Sync, Inventory, Bilingual Dashboard"],
 ["⚙️ 參數面板（模塊參數化）","⚙️ Parameters"],
 ["需求情境（點選即套用）","Demand scenario - tap to apply"],
 ["2025 實際","2025 Actual"],["Proj 預測基線","Proj Baseline"],["2026 年化","2026 Annualized"],["成長 +15%","Growth +15%"],
@@ -1042,7 +1086,7 @@ const PAIRS=[
 ["來源：原檔 Cat Proj / Dog Proj。注意：2025 實際出貨已超過此基線總量（351,952），請以參數面板的需求情境為準，客戶表用來看「節奏型態」。","Source: Cat Proj / Dog Proj in the original file. Note: 2025 actual shipments already exceed this baseline total (351,952) - use the parameter-panel scenarios for volumes; this table shows rhythm patterns."]
 ];
 PAIRS.push(["BioHealth Solutions（AminAvast / RenAvast）｜改任一參數或庫存 → 管理總表、圖表、生產計畫全部連動重算｜數據基準：歷史分析 v1.2 + MMR 配方（Cat BHS-01US / Dog BHS-02US）｜庫存初始值為 2024-01-10 盤點快照，已載入進銷存模塊期初；之後用異動登記維護，總表/儀表板即時連動","BioHealth Solutions (AminAvast / RenAvast) | Change any parameter or stock and the master table, charts and production plan recalculate together | Basis: history analysis v1.2 + MMR formulas (Cat BHS-01US / Dog BHS-02US) | Stocks start from the 2024-01-10 count snapshot, loaded as opening balances in the Inventory module; maintain them with movement entries - master table and dashboard update live."]);
-PAIRS.push(["BHS 模塊化管理系統 v6（雲端同步版）｜與 v1.2 Excel 工作簿為同一套參數與口徑；Excel 版保留為正式記錄，本頁為日常操作版。數據：Dr._Mark_product_inventory.xlsx 全量分析 + MMR 主檔照片（2026-10-22）。","BHS Modular Management System v6 (Cloud Sync) | Same parameters and definitions as the v1.2 Excel workbook; Excel stays the record of authority, this page is the daily operations view. Data: full analysis of Dr._Mark_product_inventory.xlsx + MMR photos (2026-10-22)."]);
+PAIRS.push(["BHS 模塊化管理系統 v6.1（雲端同步版）｜與 v1.2 Excel 工作簿為同一套參數與口徑；Excel 版保留為正式記錄，本頁為日常操作版。數據：Dr._Mark_product_inventory.xlsx 全量分析 + MMR 主檔照片（2026-10-22）。","BHS Modular Management System v6.1 (Cloud Sync) | Same parameters and definitions as the v1.2 Excel workbook; Excel stays the record of authority, this page is the daily operations view. Data: full analysis of Dr._Mark_product_inventory.xlsx + MMR photos (2026-10-22)."]);
 PAIRS.push(
 ["📦 進銷存與倉庫管理（異動 Log）","📦 Inventory and Warehouse (Movement Log)"],
 ["新增異動","New movement"],
@@ -1055,6 +1099,10 @@ PAIRS.push(
 ["⬇ 匯出 Log CSV","⬇ Export Log CSV"],
 ["時間","Time"],["類型","Type"],["批號","Lot"],["單號","Ref"],["經手","Operator"],
 ["期初 13859","Opening 13859"],["期初 13863","Opening 13863"],["期初 960","Opening 960"],["產線在製","At production"],["合計","Total"],["單位","Unit"]
+);
+PAIRS.push(
+["歸屬","Ownership"],
+["歸屬：全部","Ownership: All"],["客供（BHS 供料）","Customer-supplied (by BHS)"],["公司自有（AMI 採購）","AMI-owned (purchased)"],["未標記","Untagged"]
 );
 PAIRS.push(
 ["所有流動都在這裡登記：進貨、領料、退料、倉庫轉運、出貨、貼標轉換、盤點調整、損耗。每筆自動寫入 Log，庫存 = 期初 + 全部流水，即時庫存會回灌管理總表、儀表板與生產計畫。倉庫：13859 生產/原料倉、13863 包裝/包材倉、960 暫存倉；「產線」為虛擬位置（領料後、退料前的在製量）。","Register every movement here: inbound, issue, return, transfer, shipment, label conversion, adjustment, scrap. Each entry is written to the Log; stock = opening + all movements, and live stock feeds the master table, dashboard and production plan. Warehouses: 13859 production/RM, 13863 packaging, 960 storage; 'Production' is a virtual location (issued, not yet returned)."],
@@ -1077,7 +1125,7 @@ function applyStaticLang(){
  });
  const si=$("fSearch"); if(si) si.placeholder=L('搜尋品項 / 編碼','Search items / code');
  const lg=$("log_search"); if(lg) lg.placeholder=L('搜尋品項 / 批號 / 單號','Search item / lot / ref');
- document.title=L('BHS 模塊化管理系統 v6 — 雲端同步・進銷存・雙語版','BHS Modular System v6 - Cloud Sync, Inventory, Bilingual');
+ document.title=L('BHS 模塊化管理系統 v6.1 — 雲端同步・進銷存・雙語版','BHS Modular System v6.1 - Cloud Sync, Inventory, Bilingual');
 }
 function syncLangChrome(){
  MODNAME=LANG=="zh"?MODNAME_ZH:MODNAME_EN; PRODNAME=LANG=="zh"?PRODNAME_ZH:PRODNAME_EN; STXT=LANG=="zh"?STXT_ZH:STXT_EN;
@@ -1100,6 +1148,7 @@ function invCache(){ try{ localStorage.setItem("bhs-cache-v6", JSON.stringify(IN
 let _prmT=null;
 function scheduleCloudParams(){ if(!cloudAdmin()) return; clearTimeout(_prmT); _prmT=setTimeout(()=>{ sbSaveParams(JSON.parse(JSON.stringify(P))).catch(()=>{}); },800); }
 sbOn("data",function(d){
+ if(d.ownership){ OWNERSHIP=d.ownership; try{localStorage.setItem("bhs-own-v6",JSON.stringify(OWNERSHIP));}catch(e){} }
  if(d.opening){ INV.opening=d.opening; INV.txns=d.txns; INV.seq=d.seq;
   if(d.params){ P=Object.assign({},DEFP,d.params); try{localStorage.setItem("bhsv2",JSON.stringify({P:P,stocks:stocks}));}catch(e){} }
   invCache(); renderAll(true);
